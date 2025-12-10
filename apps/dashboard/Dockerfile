@@ -7,6 +7,12 @@ RUN npm install -g pnpm@latest && \
     pnpm --version && \
     which pnpm
 
+# Set PATH to include npm global bin (where pnpm is installed)
+ENV PATH="/usr/local/bin:${PATH}"
+
+# Verify pnpm is accessible
+RUN which pnpm && pnpm --version
+
 # Copy root package files first
 COPY package.json pnpm-workspace.yaml tsconfig.json ./
 
@@ -32,6 +38,6 @@ RUN pnpm --filter "@retail-brain/dashboard" build
 EXPOSE 3100
 
 # Start dashboard
-# Use sh -c to ensure pnpm is found in PATH
-CMD ["sh", "-c", "pnpm --filter @retail-brain/dashboard start"]
+# Use sh -c with explicit PATH to ensure pnpm is found
+CMD ["sh", "-c", "export PATH=/usr/local/bin:$PATH && which pnpm && pnpm --version && pnpm --filter @retail-brain/dashboard start"]
 
