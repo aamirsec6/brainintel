@@ -1,10 +1,4 @@
 services:
-  # Note: Create PostgreSQL and Redis manually in Render Dashboard first
-  # Then add their connection details as environment variables
-  # PostgreSQL: Dashboard → New + → PostgreSQL (Free tier)
-  # Redis: Dashboard → New + → Redis (Free tier)
-
-  # API Gateway (Main Entry Point)
   - type: web
     name: retail-brain-api-gateway
     env: docker
@@ -16,7 +10,6 @@ services:
         value: production
       - key: PORT
         value: 3000
-      # Set these manually after creating PostgreSQL in Render Dashboard
       - key: POSTGRES_HOST
         sync: false
       - key: POSTGRES_PORT
@@ -27,7 +20,6 @@ services:
         sync: false
       - key: POSTGRES_PASSWORD
         sync: false
-      # Set these manually after creating Redis in Render Dashboard
       - key: REDIS_HOST
         sync: false
       - key: REDIS_PORT
@@ -48,7 +40,6 @@ services:
       - key: LOG_LEVEL
         value: info
 
-  # Event Collector Service
   - type: web
     name: retail-brain-event-collector
     env: docker
@@ -60,7 +51,6 @@ services:
         value: production
       - key: PORT
         value: 3001
-      # Set these manually after creating PostgreSQL in Render Dashboard
       - key: POSTGRES_HOST
         sync: false
       - key: POSTGRES_PORT
@@ -74,7 +64,6 @@ services:
       - key: LOG_LEVEL
         value: info
 
-  # MLflow Server
   - type: web
     name: retail-brain-mlflow
     env: docker
