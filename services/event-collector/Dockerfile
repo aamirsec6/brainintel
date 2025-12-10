@@ -2,8 +2,10 @@ FROM node:20-alpine
 
 WORKDIR /app
 
-# Install pnpm
-RUN npm install -g pnpm
+# Install pnpm globally and ensure it's in PATH
+RUN npm install -g pnpm@latest && \
+    pnpm --version && \
+    which pnpm
 
 # Copy root package files first
 COPY package.json pnpm-workspace.yaml tsconfig.json ./
@@ -30,5 +32,6 @@ RUN pnpm --filter "@retail-brain/*" build
 RUN pnpm --filter "@retail-brain/event-collector" build
 
 # Start service (use start for production, dev for development)
-CMD ["pnpm", "--filter", "@retail-brain/event-collector", "start"]
+# Use sh -c to ensure pnpm is found in PATH
+CMD ["sh", "-c", "pnpm --filter @retail-brain/event-collector start"]
 
