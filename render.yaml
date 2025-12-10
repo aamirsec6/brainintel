@@ -1,0 +1,132 @@
+services:
+  # PostgreSQL Database (Free Tier)
+  - type: pspg
+    name: retail-brain-postgres
+    plan: free
+    databaseName: retail_brain
+    databaseUser: retail_brain_user
+    postgresMajorVersion: 15
+
+  # Redis (Free Tier)
+  - type: redis
+    name: retail-brain-redis
+    plan: free
+    maxmemoryPolicy: allkeys-lru
+
+  # API Gateway (Main Entry Point)
+  - type: web
+    name: retail-brain-api-gateway
+    env: docker
+    dockerfilePath: ./services/api-gateway/Dockerfile
+    dockerContext: .
+    plan: free
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 3000
+      - key: POSTGRES_HOST
+        fromDatabase:
+          name: retail-brain-postgres
+          property: host
+      - key: POSTGRES_PORT
+        fromDatabase:
+          name: retail-brain-postgres
+          property: port
+      - key: POSTGRES_DB
+        fromDatabase:
+          name: retail-brain-postgres
+          property: database
+      - key: POSTGRES_USER
+        fromDatabase:
+          name: retail-brain-postgres
+          property: user
+      - key: POSTGRES_PASSWORD
+        fromDatabase:
+          name: retail-brain-postgres
+          property: password
+      - key: REDIS_HOST
+        fromService:
+          name: retail-brain-redis
+          type: redis
+          property: host
+      - key: REDIS_PORT
+        fromService:
+          name: retail-brain-redis
+          type: redis
+          property: port
+      - key: REDIS_PASSWORD
+        fromService:
+          name: retail-brain-redis
+          type: redis
+          property: password
+      - key: PROFILE_SERVICE_URL
+        value: https://retail-brain-profile-service.onrender.com
+      - key: IDENTITY_ENGINE_URL
+        value: https://retail-brain-identity-engine.onrender.com
+      - key: RECOMMENDER_SERVICE_URL
+        value: https://retail-brain-recommender-service.onrender.com
+      - key: API_GATEWAY_API_KEYS
+        generateValue: true
+        sync: false
+      - key: EVENT_COLLECTOR_URL
+        value: https://retail-brain-event-collector.onrender.com
+      - key: LOG_LEVEL
+        value: info
+
+  # Event Collector Service
+  - type: web
+    name: retail-brain-event-collector
+    env: docker
+    dockerfilePath: ./services/event-collector/Dockerfile
+    dockerContext: .
+    plan: free
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 3001
+      - key: POSTGRES_HOST
+        fromDatabase:
+          name: retail-brain-postgres
+          property: host
+      - key: POSTGRES_PORT
+        fromDatabase:
+          name: retail-brain-postgres
+          property: port
+      - key: POSTGRES_DB
+        fromDatabase:
+          name: retail-brain-postgres
+          property: database
+      - key: POSTGRES_USER
+        fromDatabase:
+          name: retail-brain-postgres
+          property: user
+      - key: POSTGRES_PASSWORD
+        fromDatabase:
+          name: retail-brain-postgres
+          property: password
+      - key: LOG_LEVEL
+        value: info
+
+  # MLflow Server
+  - type: web
+    name: retail-brain-mlflow
+    env: docker
+    image: ghcr.io/mlflow/mlflow:v2.8.1
+    plan: free
+    envVars:
+      - key: MLFLOW_BACKEND_STORE_URI
+        fromDatabase:
+          name: retail-brain-postgres
+          property: connectionString
+        # Format: postgresql://user:password@host:port/database
+      - key: MLFLOW_DEFAULT_ARTIFACT_ROOT
+        value: file:/mlflow/artifacts
+    dockerCommand: >
+      mlflow server
+      --backend-store-uri $MLFLOW_BACKEND_STORE_URI
+      --default-artifact-root $MLFLOW_DEFAULT_ARTIFACT_ROOT
+      --host 0.0.0.0
+      --port $PORT
+

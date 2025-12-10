@@ -1,0 +1,31 @@
+# Recommendation Model Configuration (LightFM)
+
+model:
+  name: recommendation-model
+  type: lightfm
+  loss: warp  # or 'bpr', 'logistic'
+
+hyperparameters:
+  no_components: 50
+  learning_rate: 0.05
+  item_alpha: 0.0001
+  user_alpha: 0.0001
+  epochs: 20
+
+training:
+  train_split: 0.8
+  test_split: 0.2
+  random_seed: 42
+  min_interactions: 2  # Minimum interactions per user/item
+
+evaluation:
+  metrics:
+    - precision_at_k
+    - auc
+    - hit_rate
+  k: 10  # Top-K for precision@K
+
+mlflow:
+  experiment_name: recommendation-model
+  tracking_uri: http://localhost:5001
+

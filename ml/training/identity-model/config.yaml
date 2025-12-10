@@ -1,0 +1,48 @@
+# LightGBM Training Configuration
+
+model:
+  name: identity-resolution
+  type: lightgbm
+  objective: binary
+  metric: binary_logloss
+
+hyperparameters:
+  num_leaves: 31
+  learning_rate: 0.05
+  feature_fraction: 0.9
+  bagging_fraction: 0.8
+  bagging_freq: 5
+  min_child_samples: 20
+  max_depth: -1
+  reg_alpha: 0.1
+  reg_lambda: 0.1
+  n_estimators: 100
+  early_stopping_rounds: 10
+
+training:
+  train_split: 0.7
+  val_split: 0.15
+  test_split: 0.15
+  random_seed: 42
+  n_folds: 5
+  stratified: true
+
+evaluation:
+  metrics:
+    - roc_auc
+    - pr_auc
+    - precision_at_80
+    - recall
+    - precision
+    - f1_score
+    - confusion_matrix
+  
+  thresholds:
+    auto_merge: 0.80
+    review_queue: 0.45
+
+mlflow:
+  experiment_name: identity-resolution
+  tracking_uri: http://localhost:5000
+  artifact_path: models
+

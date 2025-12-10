@@ -1,0 +1,22 @@
+text,intent
+I want to buy a product,purchase
+Do you have this item in stock?,inquiry
+I'm interested in purchasing,inquiry
+This product is defective,complaint
+I need help with my order,support
+Great service, thank you!,feedback
+When will my order arrive?,inquiry
+I want to return this item,complaint
+Can you help me?,support
+I love this product!,feedback
+I want to place an order,purchase
+What are your prices?,inquiry
+This is broken,complaint
+Thank you for the help,support
+Amazing experience,feedback
+I need to buy something,purchase
+Do you ship to my location?,inquiry
+Product arrived damaged,complaint
+Can I get a refund?,support
+Excellent quality,feedback
+

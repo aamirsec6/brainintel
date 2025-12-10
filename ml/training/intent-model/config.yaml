@@ -1,0 +1,46 @@
+# Intent Detection Model Configuration
+
+model:
+  name: intent-detection
+  type: lightgbm  # or 'transformer' for DistilBERT
+  approach: embedding_classifier  # Use embeddings + LightGBM classifier
+
+hyperparameters:
+  num_leaves: 31
+  learning_rate: 0.05
+  n_estimators: 100
+  early_stopping_rounds: 10
+
+embedding:
+  model: all-mpnet-base-v2
+  dimension: 768
+
+data:
+  path: ml/training/intent-model/data/intent_dataset.csv
+
+training:
+  train_split: 0.7
+  val_split: 0.15
+  test_split: 0.15
+  random_seed: 42
+
+intents:
+  - purchase
+  - inquiry
+  - complaint
+  - support
+  - feedback
+  - other
+
+evaluation:
+  metrics:
+    - f1_score
+    - precision
+    - recall
+    - confusion_matrix
+  target_f1: 0.85
+
+mlflow:
+  experiment_name: intent-detection
+  tracking_uri: http://localhost:5001
+

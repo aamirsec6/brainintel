@@ -1,0 +1,43 @@
+# Churn and LTV Prediction Models Configuration
+
+models:
+  churn:
+    name: churn-prediction
+    target_threshold_days: 90  # Churn if no activity for 90 days
+    prediction_horizon_days: 30  # Predict churn in next 30 days
+  
+  ltv:
+    name: ltv-prediction
+    prediction_horizon_days: 365  # Predict LTV for next year
+
+hyperparameters:
+  num_leaves: 31
+  learning_rate: 0.05
+  n_estimators: 100
+  early_stopping_rounds: 10
+  objective_churn: binary
+  objective_ltv: regression
+
+training:
+  train_split: 0.7
+  val_split: 0.15
+  test_split: 0.15
+  random_seed: 42
+
+evaluation:
+  churn_metrics:
+    - auc
+    - precision
+    - recall
+    - f1_score
+    - calibration
+  ltv_metrics:
+    - rmse
+    - mae
+    - r2_score
+    - calibration
+
+mlflow:
+  experiment_name: churn-ltv-models
+  tracking_uri: http://localhost:5001
+
