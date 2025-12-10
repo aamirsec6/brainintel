@@ -37,7 +37,9 @@ RUN pnpm --filter "@retail-brain/*" build
 # Build API Gateway
 RUN pnpm --filter "@retail-brain/api-gateway" build
 
-# Start service (use start for production, dev for development)
-# Use sh -c with explicit PATH to ensure pnpm is found
-CMD ["sh", "-c", "export PATH=/usr/local/bin:$PATH && which pnpm && pnpm --version && pnpm --filter @retail-brain/api-gateway start"]
+# Set working directory to the service folder for runtime
+WORKDIR /app/services/api-gateway
+
+# Start service directly via node (dist/index.js)
+CMD ["sh", "-c", "export PATH=/usr/local/bin:$PATH && node dist/index.js"]
 

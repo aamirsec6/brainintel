@@ -37,7 +37,9 @@ RUN pnpm --filter "@retail-brain/dashboard" build
 # Expose port (Railway will set PORT env var)
 EXPOSE 3100
 
-# Start dashboard
-# Use sh -c with explicit PATH to ensure pnpm is found
-CMD ["sh", "-c", "export PATH=/usr/local/bin:$PATH && which pnpm && pnpm --version && pnpm --filter @retail-brain/dashboard start"]
+# Set working directory to the dashboard app
+WORKDIR /app/apps/dashboard
+
+# Start dashboard directly
+CMD ["sh", "-c", "export PATH=/usr/local/bin:$PATH && pnpm --filter @retail-brain/dashboard start"]
 
