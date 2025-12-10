@@ -5,10 +5,11 @@ WORKDIR /app
 # Install pnpm
 RUN npm install -g pnpm
 
-# Copy root package files
-COPY package.json pnpm-workspace.yaml ./
-COPY pnpm-lock.yaml* ./
-COPY tsconfig.json ./
+# Copy root package files first
+COPY package.json pnpm-workspace.yaml tsconfig.json ./
+
+# Copy lockfile explicitly
+COPY pnpm-lock.yaml ./
 
 # Copy shared modules
 COPY shared ./shared
@@ -16,8 +17,8 @@ COPY shared ./shared
 # Copy dashboard app
 COPY apps/dashboard ./apps/dashboard
 
-# Install dependencies
-RUN pnpm install
+# Install dependencies (pnpm will work with or without lockfile)
+RUN pnpm install --no-frozen-lockfile || pnpm install
 
 # Build shared modules
 RUN pnpm --filter "@retail-brain/*" build

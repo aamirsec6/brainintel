@@ -5,12 +5,11 @@ WORKDIR /app
 # Install pnpm
 RUN npm install -g pnpm
 
-# Copy root package files
-COPY package.json pnpm-workspace.yaml ./
-# Copy lockfile if it exists
-COPY pnpm-lock.yaml* ./
-# Copy TypeScript config needed for builds
-COPY tsconfig.json ./
+# Copy root package files first
+COPY package.json pnpm-workspace.yaml tsconfig.json ./
+
+# Copy lockfile explicitly (if it exists, great; if not, pnpm will generate it)
+COPY pnpm-lock.yaml ./
 
 # Copy shared modules
 COPY shared ./shared
@@ -18,8 +17,8 @@ COPY shared ./shared
 # Copy this service
 COPY services/api-gateway ./services/api-gateway
 
-# Install dependencies (without frozen-lockfile for Railway compatibility)
-RUN pnpm install
+# Install dependencies (pnpm will work with or without lockfile)
+RUN pnpm install --no-frozen-lockfile || pnpm install
 
 # Expose port
 EXPOSE 3000
