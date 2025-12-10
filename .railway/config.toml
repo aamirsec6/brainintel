@@ -1,0 +1,9 @@
+# Railway Configuration
+# This file helps Railway understand the project structure
+
+[build]
+builder = "DOCKERFILE"
+
+[deploy]
+startCommand = "pnpm --filter @retail-brain/api-gateway start"
+
