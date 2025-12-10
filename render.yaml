@@ -67,7 +67,7 @@ services:
   - type: web
     name: retail-brain-mlflow
     env: docker
-    image: ghcr.io/mlflow/mlflow:v2.8.1
+    dockerImage: ghcr.io/mlflow/mlflow:v2.8.1
     plan: free
     envVars:
       - key: MLFLOW_BACKEND_STORE_URI
