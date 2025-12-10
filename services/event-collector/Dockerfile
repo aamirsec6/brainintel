@@ -8,8 +8,8 @@ RUN npm install -g pnpm
 # Copy root package files first
 COPY package.json pnpm-workspace.yaml tsconfig.json ./
 
-# Copy lockfile explicitly (if it exists, great; if not, pnpm will generate it)
-COPY pnpm-lock.yaml ./
+# Copy lockfile if it exists (use shell to handle missing file gracefully)
+COPY pnpm-lock.yaml* ./
 
 # Copy shared modules
 COPY shared ./shared
@@ -17,8 +17,8 @@ COPY shared ./shared
 # Copy this service
 COPY services/event-collector ./services/event-collector
 
-# Install dependencies (pnpm will work with or without lockfile)
-RUN pnpm install --no-frozen-lockfile || pnpm install
+# Install dependencies (allow pnpm to work without strict lockfile)
+RUN pnpm install --no-frozen-lockfile
 
 # Expose port
 EXPOSE 3001
