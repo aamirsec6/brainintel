@@ -76,7 +76,7 @@ services:
         # Set this manually after creating PostgreSQL
       - key: MLFLOW_DEFAULT_ARTIFACT_ROOT
         value: file:/mlflow/artifacts
-    dockerCommand: >
+    startCommand: >
       mlflow server
       --backend-store-uri $MLFLOW_BACKEND_STORE_URI
       --default-artifact-root $MLFLOW_DEFAULT_ARTIFACT_ROOT
