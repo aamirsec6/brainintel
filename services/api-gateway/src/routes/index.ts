@@ -2,9 +2,9 @@
  * API Routes
  * Main router that delegates to specific route handlers
  */
-import { Router } from 'express';
+import { Router, type IRouter } from 'express';
 
-const router = Router();
+const router: IRouter = Router();
 
 // Health check
 router.get('/health', (req, res) => {
@@ -585,11 +585,8 @@ router.post('/onboarding/csv/upload', async (req, res) => {
     const formData = new FormData();
     
     // Forward the file if it exists
-    if (req.file) {
-      const fileBuffer = await import('fs').then(m => m.promises.readFile(req.file!.path));
-      const blob = new Blob([fileBuffer]);
-      formData.append('file', blob, req.file.originalname);
-    }
+    // Note: File upload handling removed - this endpoint should use direct file upload
+    // Railway doesn't support multipart file forwarding via fetch API
 
     const response = await fetch(`${onboardingServiceUrl}/csv/upload`, {
       method: 'POST',
