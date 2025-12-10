@@ -1,184 +1,93 @@
-# 🚂 Railway.app Quick Start Guide
+# Railway Quick Start - 5 Minute Setup
 
-Deploy your Retail Brain platform on Railway in 5 minutes!
+## 🚀 Fast Track Setup
 
-## ✅ Prerequisites
+### 1. Create New Project (Railway Dashboard)
+- Go to https://railway.app
+- Click **+ New Project** → **Deploy from GitHub repo**
+- Select: `aamirsec6/brainintel`
 
-- GitHub account
-- Railway account (sign up at https://railway.app - free tier available)
+### 2. Add PostgreSQL
+- **+ New** → **Database** → **Add PostgreSQL**
+- Copy variables: `PGHOST`, `PGPORT`, `PGDATABASE`, `PGUSER`, `PGPASSWORD`
 
-## 🚀 Step-by-Step Deployment
+### 3. Add Redis (Optional)
+- **+ New** → **Database** → **Add Redis**
+- Copy variables: `REDIS_HOST`, `REDIS_PORT`, `REDIS_PASSWORD`
 
-### Step 1: Sign Up for Railway
+### 4. Create API Gateway Service
+- **+ New** → **GitHub Repo** → Select `aamirsec6/brainintel`
+- Rename to: `retail-brain-api-gateway`
+- **Settings** → **Build**:
+  - Builder: `Dockerfile`
+  - Dockerfile Path: `Dockerfile.api-gateway`
+  - Root Directory: `.` ⚠️ **IMPORTANT: Just a dot**
+- **Variables** → Add:
+  ```
+  NODE_ENV=production
+  PORT=3000
+  POSTGRES_HOST=<from PostgreSQL>
+  POSTGRES_PORT=<from PostgreSQL>
+  POSTGRES_DB=<from PostgreSQL>
+  POSTGRES_USER=<from PostgreSQL>
+  POSTGRES_PASSWORD=<from PostgreSQL>
+  REDIS_HOST=<from Redis>
+  REDIS_PORT=<from Redis>
+  API_GATEWAY_API_KEYS=dev_key_123
+  EVENT_COLLECTOR_URL=http://retail-brain-event-collector:3001
+  ```
 
-1. Go to **https://railway.app**
-2. Click **"Start a New Project"**
-3. Sign up with **GitHub** (recommended)
-4. Authorize Railway to access your repositories
+### 5. Create Event Collector Service
+- **+ New** → **GitHub Repo** → Select `aamirsec6/brainintel`
+- Rename to: `retail-brain-event-collector`
+- **Settings** → **Build**:
+  - Builder: `Dockerfile`
+  - Dockerfile Path: `Dockerfile.event-collector`
+  - Root Directory: `.` ⚠️ **IMPORTANT: Just a dot**
+- **Variables** → Add:
+  ```
+  NODE_ENV=production
+  PORT=3001
+  POSTGRES_HOST=<from PostgreSQL>
+  POSTGRES_PORT=<from PostgreSQL>
+  POSTGRES_DB=<from PostgreSQL>
+  POSTGRES_USER=<from PostgreSQL>
+  POSTGRES_PASSWORD=<from PostgreSQL>
+  ```
 
-### Step 2: Deploy from GitHub
+### 6. Create MLflow Service
+- **+ New** → **GitHub Repo** → Select `aamirsec6/brainintel`
+- Rename to: `retail-brain-mlflow`
+- **Settings** → **Build**:
+  - Builder: `Docker Image`
+  - Docker Image: `ghcr.io/mlflow/mlflow:v2.8.1`
+- **Settings** → **Deploy** → Start Command:
+  ```
+  mlflow server --backend-store-uri $MLFLOW_BACKEND_STORE_URI --default-artifact-root $MLFLOW_DEFAULT_ARTIFACT_ROOT --host 0.0.0.0 --port $PORT
+  ```
+- **Variables** → Add:
+  ```
+  MLFLOW_BACKEND_STORE_URI=postgresql://<PGUSER>:<PGPASSWORD>@<PGHOST>:<PGPORT>/<PGDATABASE>
+  MLFLOW_DEFAULT_ARTIFACT_ROOT=file:/mlflow/artifacts
+  PORT=5000
+  ```
 
-1. In Railway dashboard, click **"New Project"**
-2. Select **"Deploy from GitHub repo"**
-3. Find and select **`aamirsec6/brainintel`**
-4. Railway will automatically detect `docker-compose.yml`!
+### 7. Run Migrations
+- Wait for API Gateway to deploy (green checkmark)
+- API Gateway → **Settings** → **Connect** → **Shell**
+- Run: `cd /app/services/api-gateway && pnpm db:migrate`
 
-### Step 3: Configure Services
+### 8. Test
+- Get API Gateway domain from **Settings** → **Networking**
+- Visit: `https://<domain>.railway.app/health`
+- Should see: `{"status":"ok"}`
 
-Railway will create services from your `docker-compose.yml`. You'll see:
-- ✅ PostgreSQL (from docker-compose)
-- ✅ Redis (from docker-compose)
-- ✅ API Gateway
-- ✅ Event Collector
-- ✅ MLflow Server
+## ✅ Critical Settings
 
-### Step 4: Add Environment Variables
+**For API Gateway & Event Collector:**
+- ✅ Root Directory: `.` (just a dot, not empty, not `services/api-gateway`)
+- ✅ Dockerfile Path: `Dockerfile.api-gateway` or `Dockerfile.event-collector`
+- ✅ Builder: `Dockerfile` (not Nixpacks)
 
-#### For API Gateway Service:
-
-1. Click on **`api-gateway`** service
-2. Go to **Variables** tab
-3. Add these variables:
-
-```
-NODE_ENV=production
-API_GATEWAY_API_KEYS=<generate with: openssl rand -hex 32>
-EVENT_COLLECTOR_URL=https://event-collector-production.up.railway.app
-```
-
-**Generate API key:**
-```bash
-openssl rand -hex 32
-```
-
-#### For Event Collector Service:
-
-1. Click on **`event-collector`** service
-2. Go to **Variables** tab
-3. Add:
-
-```
-NODE_ENV=production
-LOG_LEVEL=info
-```
-
-#### For MLflow Service:
-
-1. Click on **`mlflow-server`** service
-2. Go to **Variables** tab
-3. The `MLFLOW_BACKEND_STORE_URI` will use PostgreSQL from docker-compose automatically
-
-### Step 5: Generate Public URLs
-
-1. For **API Gateway** service:
-   - Click **Settings** tab
-   - Click **Generate Domain**
-   - Copy the URL (e.g., `https://api-gateway-production.up.railway.app`)
-
-2. For **Event Collector**:
-   - Same process - generate domain
-   - Update API Gateway's `EVENT_COLLECTOR_URL` with this new URL
-
-3. For **MLflow**:
-   - Generate domain if you want public access
-   - Or keep it internal
-
-### Step 6: Run Database Migrations
-
-1. Click on **API Gateway** service
-2. Go to **Deployments** tab
-3. Click on the latest deployment
-4. Click **"View Logs"** or use **"Shell"** tab
-5. Run:
-
-```bash
-pnpm install
-pnpm db:migrate
-```
-
-### Step 7: Test Your Deployment
-
-```bash
-curl https://api-gateway-production.up.railway.app/health
-```
-
-Should return:
-```json
-{"status":"ok","service":"api-gateway"}
-```
-
-## 🎯 Your Live URLs
-
-After deployment, you'll have:
-
-- **API Gateway**: `https://api-gateway-production.up.railway.app`
-- **Event Collector**: `https://event-collector-production.up.railway.app`
-- **MLflow**: `https://mlflow-server-production.up.railway.app` (if you generated domain)
-
-## 🔄 Auto-Deploy from GitHub
-
-Railway automatically:
-- ✅ Detects pushes to `main` branch
-- ✅ Rebuilds and redeploys services
-- ✅ Keeps your environment variables
-- ✅ Shows deployment status
-
-## 💰 Railway Pricing
-
-- **Free Tier**: $5 credit/month (perfect for testing!)
-- **Hobby Plan**: $5/month (more resources)
-- **Pro Plan**: $20/month (production-ready)
-
-## 📝 Important Notes
-
-1. **First Deploy**: Takes 5-10 minutes (building Docker images)
-2. **Environment Variables**: Set them before first deploy for best results
-3. **Database**: PostgreSQL from docker-compose is persistent
-4. **Redis**: Data persists in docker-compose volume
-5. **Logs**: Available in Railway dashboard for each service
-
-## 🆘 Troubleshooting
-
-### Service Won't Start?
-
-1. Check **Logs** tab for errors
-2. Verify environment variables are set
-3. Ensure PostgreSQL is running (check docker-compose services)
-
-### Database Connection Errors?
-
-1. Verify `POSTGRES_HOST=postgres` (docker-compose service name)
-2. Check `POSTGRES_PASSWORD` is set
-3. Wait for PostgreSQL to be fully ready (check logs)
-
-### Can't Access Service?
-
-1. Make sure you **Generated Domain** in Settings
-2. Check service is **Deployed** (green status)
-3. Verify the service is listening on `$PORT` (Railway provides this automatically)
-
-## ✅ Success Checklist
-
-- [ ] All services deployed successfully
-- [ ] API Gateway health check returns OK
-- [ ] Database migrations completed
-- [ ] Public URLs generated
-- [ ] Environment variables set
-- [ ] Can access API Gateway from browser
-
-## 🎉 You're Live!
-
-Your Retail Brain platform is now deployed on Railway! 
-
-**Next Steps:**
-- Test your API endpoints
-- Access MLflow UI
-- Start sending events to Event Collector
-- Monitor logs in Railway dashboard
-
----
-
-**Need Help?**
-- Railway Docs: https://docs.railway.app
-- Railway Discord: https://discord.gg/railway
-
+## 📖 Full Guide
+See `RAILWAY_NEW_PROJECT_SETUP.md` for detailed instructions.
