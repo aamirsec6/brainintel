@@ -43,6 +43,7 @@ services:
     environment:
       - MLFLOW_BACKEND_STORE_URI=postgresql://${POSTGRES_USER:-retail_brain_user}:${POSTGRES_PASSWORD:-retail_brain_pass}@postgres:5432/${POSTGRES_DB:-retail_brain}
       - MLFLOW_DEFAULT_ARTIFACT_ROOT=file:/mlflow/artifacts
+      - PORT=${MLFLOW_PORT:-5000}
     ports:
       - "${MLFLOW_PORT:-5000}:5000"
     volumes:
@@ -53,11 +54,11 @@ services:
     networks:
       - retail-brain-network
     command: >
-      mlflow server
+      sh -c "mlflow server
       --backend-store-uri ${MLFLOW_BACKEND_STORE_URI}
       --default-artifact-root ${MLFLOW_DEFAULT_ARTIFACT_ROOT}
       --host 0.0.0.0
-      --port 5000
+      --port ${PORT:-5000}"
 
   event-collector:
     build:
@@ -65,7 +66,7 @@ services:
       dockerfile: services/event-collector/Dockerfile
     container_name: retail-brain-event-collector
     environment:
-      - NODE_ENV=${NODE_ENV:-development}
+      - NODE_ENV=${NODE_ENV:-production}
       - PORT=${EVENT_COLLECTOR_PORT:-3001}
       - POSTGRES_HOST=postgres
       - POSTGRES_PORT=5432
@@ -80,11 +81,6 @@ services:
         condition: service_healthy
     networks:
       - retail-brain-network
-    volumes:
-      - ./services/event-collector:/app/services/event-collector
-      - ./shared:/app/shared
-      - /app/node_modules
-    command: npm run dev
 
   api-gateway:
     build:
@@ -92,7 +88,7 @@ services:
       dockerfile: services/api-gateway/Dockerfile
     container_name: retail-brain-api-gateway
     environment:
-      - NODE_ENV=${NODE_ENV:-development}
+      - NODE_ENV=${NODE_ENV:-production}
       - PORT=${API_GATEWAY_PORT:-3000}
       - POSTGRES_HOST=postgres
       - POSTGRES_PORT=5432
@@ -115,11 +111,22 @@ services:
         condition: service_started
     networks:
       - retail-brain-network
-    volumes:
-      - ./services/api-gateway:/app/services/api-gateway
-      - ./shared:/app/shared
-      - /app/node_modules
-    command: npm run dev
+
+  dashboard:
+    build:
+      context: .
+      dockerfile: apps/dashboard/Dockerfile
+    container_name: retail-brain-dashboard
+    environment:
+      - NODE_ENV=${NODE_ENV:-production}
+      - PORT=${DASHBOARD_PORT:-3100}
+      - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-http://api-gateway:3000}
+    ports:
+      - "${DASHBOARD_PORT:-3100}:3100"
+    depends_on:
+      - api-gateway
+    networks:
+      - retail-brain-network
 
 volumes:
   postgres-data:

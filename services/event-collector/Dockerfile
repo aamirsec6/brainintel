@@ -6,7 +6,9 @@ WORKDIR /app
 RUN npm install -g pnpm
 
 # Copy root package files
-COPY package.json pnpm-workspace.yaml pnpm-lock.yaml* ./
+COPY package.json pnpm-workspace.yaml ./
+# Copy lockfile if it exists
+COPY pnpm-lock.yaml* ./
 # Copy TypeScript config needed for builds
 COPY tsconfig.json ./
 
@@ -16,12 +18,18 @@ COPY shared ./shared
 # Copy this service
 COPY services/event-collector ./services/event-collector
 
-# Install dependencies
-RUN pnpm install --frozen-lockfile
+# Install dependencies (without frozen-lockfile for Railway compatibility)
+RUN pnpm install
 
 # Expose port
 EXPOSE 3001
 
-# Start service
-CMD ["pnpm", "--filter", "@retail-brain/event-collector", "dev"]
+# Build shared modules first
+RUN pnpm --filter "@retail-brain/*" build
+
+# Build Event Collector
+RUN pnpm --filter "@retail-brain/event-collector" build
+
+# Start service (use start for production, dev for development)
+CMD ["pnpm", "--filter", "@retail-brain/event-collector", "start"]
 
