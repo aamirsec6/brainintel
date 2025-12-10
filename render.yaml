@@ -1,17 +1,8 @@
 services:
-  # PostgreSQL Database (Free Tier)
-  - type: pspg
-    name: retail-brain-postgres
-    plan: free
-    databaseName: retail_brain
-    databaseUser: retail_brain_user
-    postgresMajorVersion: 15
-
-  # Redis (Free Tier)
-  - type: redis
-    name: retail-brain-redis
-    plan: free
-    maxmemoryPolicy: allkeys-lru
+  # Note: Create PostgreSQL and Redis manually in Render Dashboard first
+  # Then add their connection details as environment variables
+  # PostgreSQL: Dashboard → New + → PostgreSQL (Free tier)
+  # Redis: Dashboard → New + → Redis (Free tier)
 
   # API Gateway (Main Entry Point)
   - type: web
@@ -25,41 +16,24 @@ services:
         value: production
       - key: PORT
         value: 3000
+      # Set these manually after creating PostgreSQL in Render Dashboard
       - key: POSTGRES_HOST
-        fromDatabase:
-          name: retail-brain-postgres
-          property: host
+        sync: false
       - key: POSTGRES_PORT
-        fromDatabase:
-          name: retail-brain-postgres
-          property: port
+        sync: false
       - key: POSTGRES_DB
-        fromDatabase:
-          name: retail-brain-postgres
-          property: database
+        sync: false
       - key: POSTGRES_USER
-        fromDatabase:
-          name: retail-brain-postgres
-          property: user
+        sync: false
       - key: POSTGRES_PASSWORD
-        fromDatabase:
-          name: retail-brain-postgres
-          property: password
+        sync: false
+      # Set these manually after creating Redis in Render Dashboard
       - key: REDIS_HOST
-        fromService:
-          name: retail-brain-redis
-          type: redis
-          property: host
+        sync: false
       - key: REDIS_PORT
-        fromService:
-          name: retail-brain-redis
-          type: redis
-          property: port
+        sync: false
       - key: REDIS_PASSWORD
-        fromService:
-          name: retail-brain-redis
-          type: redis
-          property: password
+        sync: false
       - key: PROFILE_SERVICE_URL
         value: https://retail-brain-profile-service.onrender.com
       - key: IDENTITY_ENGINE_URL
@@ -86,26 +60,17 @@ services:
         value: production
       - key: PORT
         value: 3001
+      # Set these manually after creating PostgreSQL in Render Dashboard
       - key: POSTGRES_HOST
-        fromDatabase:
-          name: retail-brain-postgres
-          property: host
+        sync: false
       - key: POSTGRES_PORT
-        fromDatabase:
-          name: retail-brain-postgres
-          property: port
+        sync: false
       - key: POSTGRES_DB
-        fromDatabase:
-          name: retail-brain-postgres
-          property: database
+        sync: false
       - key: POSTGRES_USER
-        fromDatabase:
-          name: retail-brain-postgres
-          property: user
+        sync: false
       - key: POSTGRES_PASSWORD
-        fromDatabase:
-          name: retail-brain-postgres
-          property: password
+        sync: false
       - key: LOG_LEVEL
         value: info
 
@@ -117,10 +82,9 @@ services:
     plan: free
     envVars:
       - key: MLFLOW_BACKEND_STORE_URI
-        fromDatabase:
-          name: retail-brain-postgres
-          property: connectionString
+        sync: false
         # Format: postgresql://user:password@host:port/database
+        # Set this manually after creating PostgreSQL
       - key: MLFLOW_DEFAULT_ARTIFACT_ROOT
         value: file:/mlflow/artifacts
     dockerCommand: >
