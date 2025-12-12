@@ -40,3 +40,4 @@ out/
 postgres-data/
 redis-data/
 
+.vercel
