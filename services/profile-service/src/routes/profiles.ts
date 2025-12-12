@@ -2,7 +2,7 @@
  * Profile routes
  */
 import { Router } from 'express';
-import { getCustomer360, searchCustomers, getCustomerTimeline, getStats, getAnalytics } from '../controllers/profileController';
+import { getCustomer360, searchCustomers, getCustomerTimeline, getStats, getAnalytics, getRecentActivity, getActivityChart } from '../controllers/profileController';
 
 const router = Router();
 
@@ -17,6 +17,18 @@ router.get('/stats', getStats);
  * Get comprehensive analytics with time-series data
  */
 router.get('/analytics', getAnalytics);
+
+/**
+ * GET /activity
+ * Get recent activity feed
+ */
+router.get('/activity', getRecentActivity);
+
+/**
+ * GET /activity/chart
+ * Get activity chart data (events and customers by day)
+ */
+router.get('/activity/chart', getActivityChart);
 
 /**
  * GET /search

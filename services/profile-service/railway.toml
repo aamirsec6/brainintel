@@ -1,0 +1,8 @@
+[build]
+builder = "DOCKERFILE"
+dockerfilePath = "services/profile-service/Dockerfile"
+
+[deploy]
+startCommand = "node services/profile-service/dist/index.js"
+restartPolicyType = "ON_FAILURE"
+

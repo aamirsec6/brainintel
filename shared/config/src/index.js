@@ -4,6 +4,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.servicePorts = exports.nodeEnv = exports.logConfig = exports.identityConfig = exports.rateLimitConfig = exports.apiGatewayConfig = exports.redisConfig = exports.dbConfig = void 0;
+exports.getConfig = getConfig;
 exports.getEnv = getEnv;
 exports.getEnvOrDefault = getEnvOrDefault;
 exports.getEnvInt = getEnvInt;
@@ -130,5 +131,54 @@ exports.servicePorts = {
     recommender: getEnvInt('RECOMMENDER_SERVICE_PORT', 3004),
     onboarding: getEnvInt('ONBOARDING_SERVICE_PORT', 3005),
     aiAssistant: getEnvInt('AI_ASSISTANT_SERVICE_PORT', 3006),
+    webhook: getEnvInt('WEBHOOK_SERVICE_PORT', 3007),
+    connector: getEnvInt('CONNECTOR_SERVICE_PORT', 3008),
+    inventory: getEnvInt('INVENTORY_SERVICE_PORT', 3009),
+    pricing: getEnvInt('PRICING_SERVICE_PORT', 3010),
+    journey: getEnvInt('JOURNEY_SERVICE_PORT', 3011),
+    attribution: getEnvInt('ATTRIBUTION_SERVICE_PORT', 3012),
+    featureStore: getEnvInt('FEATURE_STORE_SERVICE_PORT', 3014),
+    mlScorer: getEnvInt('ML_SCORER_SERVICE_PORT', 3015),
+    embedding: getEnvInt('EMBEDDING_SERVICE_PORT', 3016),
+    intent: getEnvInt('INTENT_SERVICE_PORT', 3017),
+    nudge: getEnvInt('NUDGE_ENGINE_PORT', 3018),
+    abTesting: getEnvInt('AB_TESTING_SERVICE_PORT', 3019),
+    mlMonitoring: getEnvInt('ML_MONITORING_SERVICE_PORT', 3020),
 };
+/**
+ * Get all configuration
+ */
+function getConfig() {
+    return {
+        ...exports.dbConfig,
+        ...exports.redisConfig,
+        ...exports.apiGatewayConfig,
+        ...exports.rateLimitConfig,
+        ...exports.identityConfig,
+        ...exports.logConfig,
+        nodeEnv: exports.nodeEnv,
+        ...exports.servicePorts,
+        EVENT_COLLECTOR_URL: getEnvOrDefault('EVENT_COLLECTOR_URL', 'http://localhost:3001'),
+        PROFILE_SERVICE_URL: getEnvOrDefault('PROFILE_SERVICE_URL', 'http://localhost:3003'),
+        WEBHOOK_SERVICE_URL: getEnvOrDefault('WEBHOOK_SERVICE_URL', 'http://localhost:3007'),
+        CONNECTOR_SERVICE_URL: getEnvOrDefault('CONNECTOR_SERVICE_URL', 'http://localhost:3008'),
+        INVENTORY_SERVICE_URL: getEnvOrDefault('INVENTORY_SERVICE_URL', 'http://localhost:3009'),
+        PRICING_SERVICE_URL: getEnvOrDefault('PRICING_SERVICE_URL', 'http://localhost:3010'),
+        JOURNEY_SERVICE_URL: getEnvOrDefault('JOURNEY_SERVICE_URL', 'http://localhost:3011'),
+        ATTRIBUTION_SERVICE_URL: getEnvOrDefault('ATTRIBUTION_SERVICE_URL', 'http://localhost:3012'),
+        ML_SCORER_SERVICE_URL: getEnvOrDefault('ML_SCORER_SERVICE_URL', `http://localhost:${exports.servicePorts.mlScorer}`),
+        EMBEDDING_SERVICE_URL: getEnvOrDefault('EMBEDDING_SERVICE_URL', `http://localhost:${exports.servicePorts.embedding}`),
+        INTENT_SERVICE_URL: getEnvOrDefault('INTENT_SERVICE_URL', `http://localhost:${exports.servicePorts.intent}`),
+        MLFLOW_TRACKING_URI: getEnvOrDefault('MLFLOW_TRACKING_URI', 'http://localhost:5001'),
+        API_KEY: getEnvOrDefault('API_KEY', 'test_api_key'),
+        WEBHOOK_SERVICE_PORT: exports.servicePorts.webhook,
+        CONNECTOR_SERVICE_PORT: exports.servicePorts.connector,
+        INVENTORY_SERVICE_PORT: exports.servicePorts.inventory,
+        PRICING_SERVICE_PORT: exports.servicePorts.pricing,
+        JOURNEY_SERVICE_PORT: exports.servicePorts.journey,
+        ATTRIBUTION_SERVICE_PORT: exports.servicePorts.attribution,
+        REDIS_HOST: exports.redisConfig.host,
+        REDIS_PORT: exports.redisConfig.port,
+    };
+}
 //# sourceMappingURL=index.js.map

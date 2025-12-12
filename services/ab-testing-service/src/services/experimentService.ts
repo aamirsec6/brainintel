@@ -191,7 +191,7 @@ export async function getExperimentResults(experimentId: string): Promise<any> {
   // Get assignments and conversions by variant
   const results = await db.query(
     `SELECT 
-       variant,
+       a.variant,
        COUNT(DISTINCT a.profile_id) as assigned_count,
        COUNT(DISTINCT c.profile_id) as converted_count,
        COUNT(c.id) as total_conversions,
@@ -201,7 +201,7 @@ export async function getExperimentResults(experimentId: string): Promise<any> {
      LEFT JOIN ab_conversion c ON a.experiment_id = c.experiment_id 
        AND a.profile_id = c.profile_id
      WHERE a.experiment_id = $1
-     GROUP BY variant`,
+     GROUP BY a.variant`,
     [experimentId]
   );
 

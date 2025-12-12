@@ -54,6 +54,7 @@ export default function NudgesPage() {
   const [bulkResults, setBulkResults] = useState<any>(null);
   const [autoExecute, setAutoExecute] = useState(false);
   const [autoMode, setAutoMode] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
 
   useEffect(() => {
     fetchRecentNudges();
@@ -164,6 +165,15 @@ export default function NudgesPage() {
     }
   }
 
+  async function refreshNow() {
+    setRefreshing(true);
+    try {
+      await Promise.all([fetchRecentNudges(), fetchStats()]);
+    } finally {
+      setRefreshing(false);
+    }
+  }
+
   const nudgeTypeColors: Record<string, string> = {
     churn_prevention: 'bg-red-100 text-red-800',
     upsell: 'bg-blue-100 text-blue-800',
@@ -180,62 +190,53 @@ export default function NudgesPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <header className="bg-white shadow-sm border-b">
-        <div className="max-w-7xl mx-auto px-6 py-4">
-          <Link href="/" className="text-blue-600 hover:text-blue-800 text-sm">
-            ← Back to Dashboard
-          </Link>
-          <div className="flex items-center justify-between mt-2">
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900">🤖 Nudge Automator</h1>
-              <p className="text-sm text-gray-600">Autonomous customer engagement engine</p>
-            </div>
-            <div className="flex items-center gap-4">
-              <label className="flex items-center gap-2">
-                <input
-                  type="checkbox"
-                  checked={autoMode}
-                  onChange={(e) => setAutoMode(e.target.checked)}
-                  className="w-4 h-4"
-                />
-                <span className="text-sm">Auto-refresh</span>
-              </label>
-            </div>
-          </div>
+    <div className="p-6 bg-gray-900 min-h-full">
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h1 className="text-2xl font-semibold text-white mb-2">Nudge Automator</h1>
+          <p className="text-sm text-gray-400">Autonomous customer engagement engine</p>
         </div>
-      </header>
+        <div className="flex items-center gap-4">
+          <button
+            onClick={refreshNow}
+            disabled={refreshing}
+            className="px-4 py-2 border-2 border-gray-600 rounded-lg text-gray-300 hover:bg-gray-700 hover:text-white transition-colors disabled:opacity-50"
+          >
+            {refreshing ? 'Refreshing...' : 'Refresh'}
+          </button>
+        </div>
+      </div>
 
-      <main className="max-w-7xl mx-auto px-6 py-8">
+      <div>
         {/* Stats */}
         {stats && (
           <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-6">
-            <div className="bg-white rounded-lg shadow-sm p-4">
-              <p className="text-sm text-gray-600">Total Nudges</p>
-              <p className="text-2xl font-bold">{stats.stats.total_nudges}</p>
+            <div className="bg-gray-800 rounded-lg p-4">
+              <p className="text-sm text-gray-400">Total Nudges</p>
+              <p className="text-2xl font-bold text-white">{stats.stats.total_nudges}</p>
             </div>
-            <div className="bg-white rounded-lg shadow-sm p-4">
-              <p className="text-sm text-gray-600">Customers</p>
-              <p className="text-2xl font-bold">{stats.stats.unique_customers}</p>
+            <div className="bg-gray-800 rounded-lg p-4">
+              <p className="text-sm text-gray-400">Customers</p>
+              <p className="text-2xl font-bold text-white">{stats.stats.unique_customers}</p>
             </div>
-            <div className="bg-white rounded-lg shadow-sm p-4">
-              <p className="text-sm text-gray-600">Today</p>
-              <p className="text-2xl font-bold text-green-600">{stats.stats.nudges_today}</p>
+            <div className="bg-gray-800 rounded-lg p-4">
+              <p className="text-sm text-gray-400">Today</p>
+              <p className="text-2xl font-bold text-green-400">{stats.stats.nudges_today}</p>
             </div>
-            <div className="bg-white rounded-lg shadow-sm p-4">
-              <p className="text-sm text-gray-600">This Week</p>
-              <p className="text-2xl font-bold">{stats.stats.nudges_this_week}</p>
+            <div className="bg-gray-800 rounded-lg p-4">
+              <p className="text-sm text-gray-400">This Week</p>
+              <p className="text-2xl font-bold text-white">{stats.stats.nudges_this_week}</p>
             </div>
-            <div className="bg-white rounded-lg shadow-sm p-4">
-              <p className="text-sm text-gray-600">Types</p>
-              <p className="text-2xl font-bold">{stats.stats.nudge_types}</p>
+            <div className="bg-gray-800 rounded-lg p-4">
+              <p className="text-sm text-gray-400">Types</p>
+              <p className="text-2xl font-bold text-white">{stats.stats.nudge_types}</p>
             </div>
           </div>
         )}
 
         {/* Bulk Evaluation */}
-        <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
-          <h2 className="text-lg font-semibold mb-4">🚀 Bulk Nudge Evaluation</h2>
+        <div className="bg-gray-800 rounded-lg p-6 mb-6">
+          <h2 className="text-lg font-semibold mb-4 text-white">Bulk Nudge Evaluation</h2>
           <div className="space-y-4">
             <div className="flex items-center gap-4">
               <button
@@ -243,7 +244,9 @@ export default function NudgesPage() {
                 disabled={bulkEvaluating}
                 className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
               >
-                {bulkEvaluating ? 'Evaluating...' : 'Evaluate 50 Customers'}
+                <span className="text-white">
+                  {bulkEvaluating ? 'Evaluating...' : 'Evaluate 50 Customers'}
+                </span>
               </button>
               <label className="flex items-center gap-2">
                 <input
@@ -252,39 +255,39 @@ export default function NudgesPage() {
                   onChange={(e) => setAutoExecute(e.target.checked)}
                   className="w-4 h-4"
                 />
-                <span className="text-sm">Auto-execute nudges</span>
+                <span className="text-sm text-white">Auto-execute nudges</span>
               </label>
             </div>
             {bulkResults && (
-              <div className="p-4 bg-blue-50 rounded-lg">
-                <p className="font-semibold mb-2">Bulk Evaluation Results</p>
+              <div className="p-4 bg-blue-500/20 border border-blue-500/30 rounded-lg">
+                <p className="font-semibold mb-2 text-white">Bulk Evaluation Results</p>
                 <div className="grid grid-cols-3 gap-4 text-sm">
                   <div>
-                    <span className="text-gray-600">Evaluated:</span>{' '}
-                    <span className="font-medium">{bulkResults.evaluated}</span>
+                    <span className="text-gray-400">Evaluated:</span>{' '}
+                    <span className="font-medium text-white">{bulkResults.evaluated}</span>
                   </div>
                   <div>
-                    <span className="text-gray-600">Nudges Recommended:</span>{' '}
-                    <span className="font-medium text-green-600">{bulkResults.nudges_recommended}</span>
+                    <span className="text-gray-400">Nudges Recommended:</span>{' '}
+                    <span className="font-medium text-green-400">{bulkResults.nudges_recommended}</span>
                   </div>
                   <div>
-                    <span className="text-gray-600">Auto-executed:</span>{' '}
-                    <span className="font-medium">{bulkResults.auto_executed ? 'Yes' : 'No'}</span>
+                    <span className="text-gray-400">Auto-executed:</span>{' '}
+                    <span className="font-medium text-white">{bulkResults.auto_executed ? 'Yes' : 'No'}</span>
                   </div>
                 </div>
                 {bulkResults.results && bulkResults.results.length > 0 && (
                   <div className="mt-4 max-h-60 overflow-y-auto">
-                    <p className="text-sm font-medium mb-2">Recommended Nudges:</p>
+                    <p className="text-sm font-medium mb-2 text-white">Recommended Nudges:</p>
                     <div className="space-y-2">
                       {bulkResults.results.slice(0, 10).map((result: any, index: number) => (
-                        <div key={index} className="p-2 bg-white rounded text-sm">
+                        <div key={index} className="p-2 bg-gray-700 rounded text-sm">
                           <span className="font-medium">{result.customer_name || result.profile_id}</span>
                           {' - '}
-                          <span className={nudgeTypeColors[result.nudge.nudge_type || ''] || 'text-gray-600'}>
+                          <span className={nudgeTypeColors[result.nudge.nudge_type || ''] || 'text-gray-400'}>
                             {result.nudge.nudge_type}
                           </span>
                           {' - '}
-                          <span className="text-gray-600">{result.nudge.reason}</span>
+                          <span className="text-gray-300">{result.nudge.reason}</span>
                         </div>
                       ))}
                     </div>
@@ -296,8 +299,8 @@ export default function NudgesPage() {
         </div>
 
         {/* Single Customer Evaluation */}
-        <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
-          <h2 className="text-lg font-semibold mb-4">Evaluate Nudge for Customer</h2>
+        <div className="bg-gray-800 rounded-lg p-6 mb-6">
+          <h2 className="text-lg font-semibold mb-4 text-white">Evaluate Nudge for Customer</h2>
           <div className="flex gap-4">
             <input
               type="text"
@@ -311,35 +314,37 @@ export default function NudgesPage() {
               disabled={evaluating || !profileId}
               className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
             >
-              {evaluating ? 'Evaluating...' : 'Evaluate'}
+              <span className="text-white">
+                {evaluating ? 'Evaluating...' : 'Evaluate'}
+              </span>
             </button>
           </div>
 
           {evaluationResult && (
-            <div className="mt-4 p-4 bg-blue-50 rounded-lg">
+            <div className="mt-4 p-4 bg-blue-500/20 border border-blue-500/30 rounded-lg">
               <h3 className="font-semibold mb-2">Nudge Decision</h3>
               <div className="space-y-2">
                 <p>
-                  <span className="font-medium">Should Nudge:</span>{' '}
+                  <span className="font-medium text-white">Should Nudge:</span>{' '}
                   {evaluationResult.nudge?.should_nudge ? (
-                    <span className="text-green-600 font-medium">✅ Yes</span>
+                    <span className="text-green-400 font-medium">✅ Yes</span>
                   ) : (
-                    <span className="text-gray-600">❌ No</span>
+                    <span className="text-gray-400">❌ No</span>
                   )}
                 </p>
                 {evaluationResult.nudge?.should_nudge && (
                   <>
-                    <p>
+                    <p className="text-white">
                       <span className="font-medium">Type:</span>{' '}
-                      <span className={nudgeTypeColors[evaluationResult.nudge.nudge_type || ''] || ''}>
+                      <span className={nudgeTypeColors[evaluationResult.nudge.nudge_type || ''] || 'text-gray-300'}>
                         {evaluationResult.nudge.nudge_type}
                       </span>
                     </p>
-                    <p>
+                    <p className="text-white">
                       <span className="font-medium">Priority:</span>{' '}
                       {(evaluationResult.nudge.priority * 100).toFixed(0)}%
                     </p>
-                    <p>
+                    <p className="text-white">
                       <span className="font-medium">Reason:</span> {evaluationResult.nudge.reason}
                     </p>
                     {evaluationResult.nudge.predicted_churn_prob !== undefined && (
@@ -355,7 +360,7 @@ export default function NudgesPage() {
                       </p>
                     )}
                     {evaluationResult.nudge.action && (
-                      <div className="mt-2 p-2 bg-white rounded">
+                      <div className="mt-2 p-2 bg-gray-700 rounded">
                         <p className="text-sm font-medium">Action:</p>
                         <div className="text-sm mt-1">
                           <p>
@@ -377,35 +382,35 @@ export default function NudgesPage() {
         </div>
 
         {/* Recent Nudges Feed */}
-        <div className="bg-white rounded-lg shadow-sm p-6">
+        <div className="bg-gray-800 rounded-lg p-6">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold">📋 Recent Nudge Executions</h2>
+            <h2 className="text-lg font-semibold text-white">Recent Nudge Executions</h2>
             <button
               onClick={fetchRecentNudges}
-              className="px-4 py-2 text-sm bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200"
+              className="px-4 py-2 text-sm bg-gray-700 text-gray-300 rounded-lg hover:bg-gray-600"
             >
               Refresh
             </button>
           </div>
           {loading ? (
-            <p className="text-gray-600">Loading...</p>
+            <p className="text-gray-400">Loading...</p>
           ) : nudges.length === 0 ? (
-            <p className="text-gray-600">No nudges executed yet. Run bulk evaluation to start!</p>
+            <p className="text-gray-400">No nudges executed yet. Run bulk evaluation to start!</p>
           ) : (
             <div className="space-y-3">
               {nudges.map((nudge, index) => (
-                <div key={index} className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50">
+                <div key={index} className="border border-gray-700 rounded-lg p-4 hover:bg-gray-750">
                   <div className="flex items-start justify-between mb-2">
                     <div className="flex-1">
                       <div className="flex items-center gap-2 mb-1">
-                        <span className={`px-2 py-1 text-xs font-medium rounded ${nudgeTypeColors[nudge.nudge_type] || 'bg-gray-100 text-gray-800'}`}>
+                        <span className={`px-2 py-1 text-xs font-medium rounded ${nudgeTypeColors[nudge.nudge_type] || 'bg-gray-700 text-gray-300'}`}>
                           {nudge.nudge_type}
                         </span>
-                        <span className="text-sm text-gray-600">
+                        <span className="text-sm text-gray-400">
                           {channelIcons[nudge.action.channel] || '📧'} {nudge.action.channel}
                         </span>
                       </div>
-                      <p className="text-sm font-medium text-gray-900">
+                      <p className="text-sm font-medium text-white">
                         {nudge.full_name || nudge.primary_email || nudge.profile_id}
                       </p>
                       <p className="text-xs text-gray-500 mt-1">
@@ -413,13 +418,13 @@ export default function NudgesPage() {
                       </p>
                     </div>
                     {nudge.result && (
-                      <span className="px-2 py-1 text-xs bg-green-100 text-green-800 rounded">
+                      <span className="px-2 py-1 text-xs bg-green-500/20 text-green-400 rounded">
                         {nudge.result}
                       </span>
                     )}
                   </div>
                   {nudge.action.personalization && Object.keys(nudge.action.personalization).length > 0 && (
-                    <div className="mt-2 text-xs text-gray-600">
+                    <div className="mt-2 text-xs text-gray-400">
                       <span className="font-medium">Personalization:</span>{' '}
                       {Object.entries(nudge.action.personalization)
                         .map(([k, v]) => `${k}: ${v}`)

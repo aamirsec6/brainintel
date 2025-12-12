@@ -3,6 +3,13 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 
+interface IntentResult {
+  intent: string;
+  confidence: number;
+  channel?: string;
+  metadata?: Record<string, any>;
+}
+
 export default function IntentPage() {
   const [text, setText] = useState('');
   const [result, setResult] = useState<IntentResult | null>(null);
@@ -21,7 +28,9 @@ export default function IntentPage() {
   async function fetchStats() {
     setStatsLoading(true);
     try {
-      const response = await fetch('http://localhost:3000/v1/intent/stats');
+      const baseUrl = process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, '') || '';
+      const endpoint = `${baseUrl}/v1/intent/stats`;
+      const response = await fetch(baseUrl ? endpoint : '/v1/intent/stats');
       if (!response.ok) {
         throw new Error(await response.text());
       }
@@ -40,7 +49,9 @@ export default function IntentPage() {
     if (!text.trim()) return;
     setLoading(true);
     try {
-      const response = await fetch('http://localhost:3000/v1/intent/detect', {
+      const baseUrl = process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, '') || '';
+      const endpoint = `${baseUrl}/v1/intent/detect`;
+      const response = await fetch(baseUrl ? endpoint : '/v1/intent/detect', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ text }),
@@ -70,28 +81,23 @@ export default function IntentPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <header className="bg-white shadow-sm border-b">
-        <div className="max-w-7xl mx-auto px-6 py-4">
-          <Link href="/" className="text-blue-600 hover:text-blue-800 text-sm">
-            ← Back to Dashboard
-          </Link>
-          <h1 className="text-2xl font-bold text-gray-900 mt-2">🎯 Intent Detection</h1>
-          <p className="text-sm text-gray-600">Monitor intent throughput, drift, and live detections.</p>
-        </div>
-      </header>
+    <div className="p-6 bg-gray-900 min-h-full">
+      <div className="mb-6">
+        <h1 className="text-2xl font-semibold text-white mb-2">Intent Detection</h1>
+        <p className="text-sm text-gray-400">Monitor intent throughput, drift, and live detections.</p>
+      </div>
 
-      <main className="max-w-7xl mx-auto px-6 py-8 space-y-6">
+      <div className="space-y-6">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Intent Detection */}
-          <div className="bg-white rounded-lg shadow-sm p-6 lg:col-span-2">
-            <h2 className="text-lg font-semibold mb-4">Detect Intent</h2>
+          <div className="bg-gray-800 rounded-lg p-6 lg:col-span-2">
+            <h2 className="text-lg font-semibold mb-4 text-white">Detect Intent</h2>
             <div className="space-y-4">
               <textarea
                 value={text}
                 onChange={(e) => setText(e.target.value)}
                 placeholder="Enter customer message (WhatsApp, email, chat)..."
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg"
+                className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400"
                 rows={5}
               />
               <button
@@ -135,12 +141,12 @@ export default function IntentPage() {
           </div>
 
           {/* Metrics Overview */}
-          <div className="bg-white rounded-lg shadow-sm p-6 space-y-4">
-            <h2 className="text-lg font-semibold">Realtime Metrics</h2>
+          <div className="bg-gray-800 rounded-lg p-6 space-y-4">
+            <h2 className="text-lg font-semibold text-white">Realtime Metrics</h2>
             {statsLoading ? (
-              <p className="text-sm text-gray-500">Loading metrics...</p>
+              <p className="text-sm text-gray-400">Loading metrics...</p>
             ) : statsError ? (
-              <p className="text-sm text-red-500">{statsError}</p>
+              <p className="text-sm text-red-600">{statsError}</p>
             ) : (
               <div className="space-y-3">
                 <MetricCard label="Total requests" value={stats?.totalRequests.toLocaleString() || '0'} />
@@ -166,7 +172,7 @@ export default function IntentPage() {
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="bg-white rounded-lg shadow-sm p-6">
-            <h2 className="text-lg font-semibold mb-4">Top Intents</h2>
+            <h2 className="text-lg font-semibold mb-4 text-gray-900">Top Intents</h2>
             <div className="space-y-3">
               {stats?.intentDistribution.map((intentItem) => (
                 <IntentBar
@@ -175,14 +181,12 @@ export default function IntentPage() {
                   count={intentItem.count}
                   max={stats.intentDistribution[0]?.count || 1}
                 />
-              )) || (
-                <p className="text-sm text-gray-500">No intent data yet.</p>
-              )}
+              )) || <p className="text-sm text-gray-400">No intent data yet.</p>}
             </div>
           </div>
 
-          <div className="bg-white rounded-lg shadow-sm p-6">
-            <h2 className="text-lg font-semibold mb-4">Channels</h2>
+          <div className="bg-gray-800 rounded-lg p-6">
+            <h2 className="text-lg font-semibold mb-4 text-white">Channels</h2>
             <div className="space-y-3">
               {stats?.channelDistribution.map((channelItem) => (
                 <ChannelSummary
@@ -191,51 +195,49 @@ export default function IntentPage() {
                   count={channelItem.count}
                   total={stats?.totalRequests || 1}
                 />
-              )) || (
-                <p className="text-sm text-gray-500">Listening for traffic...</p>
-              )}
+              )) || <p className="text-sm text-gray-400">Listening for traffic...</p>}
             </div>
           </div>
 
-          <div className="bg-white rounded-lg shadow-sm p-6">
-            <h2 className="text-lg font-semibold mb-4">Recent Activity</h2>
+          <div className="bg-gray-800 rounded-lg p-6">
+            <h2 className="text-lg font-semibold mb-4 text-white">Recent Activity</h2>
             <div className="space-y-3 max-h-80 overflow-y-auto">
               {(stats?.recentActivity.length && stats.recentActivity) ? (
                 stats.recentActivity.map((entry, index) => (
                   <RecentActivityCard key={`${entry.intent}-${index}`} entry={entry} colors={intentColors} />
                 ))
               ) : (
-                <p className="text-sm text-gray-500">No recent detections yet.</p>
+                <p className="text-sm text-gray-400">No recent detections yet.</p>
               )}
             </div>
           </div>
         </div>
 
         {/* Use Cases */}
-        <div className="bg-white rounded-lg shadow-sm p-6">
-          <h2 className="text-lg font-semibold mb-4">Use Cases</h2>
+        <div className="bg-gray-800 rounded-lg p-6">
+          <h2 className="text-lg font-semibold mb-4 text-white">Use Cases</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="p-4 bg-blue-50 rounded-lg">
-              <h3 className="font-semibold mb-2">WhatsApp Messages</h3>
-              <p className="text-sm text-gray-600">
+            <div className="p-4 bg-blue-500/20 rounded-lg border border-blue-500/30">
+              <h3 className="font-semibold mb-2 text-white">WhatsApp Messages</h3>
+              <p className="text-sm text-gray-300">
                 Automatically detect purchase intent, complaints, or support requests from customer conversations.
               </p>
             </div>
-            <div className="p-4 bg-green-50 rounded-lg">
-              <h3 className="font-semibold mb-2">Email Support</h3>
-              <p className="text-sm text-gray-600">
+            <div className="p-4 bg-green-500/20 rounded-lg border border-green-500/30">
+              <h3 className="font-semibold mb-2 text-white">Email Support</h3>
+              <p className="text-sm text-gray-300">
                 Route emails to the right team based on detected intent and urgency.
               </p>
             </div>
-            <div className="p-4 bg-purple-50 rounded-lg">
-              <h3 className="font-semibold mb-2">Live Chat</h3>
-              <p className="text-sm text-gray-600">
+            <div className="p-4 bg-purple-500/20 rounded-lg border border-purple-500/30">
+              <h3 className="font-semibold mb-2 text-white">Live Chat</h3>
+              <p className="text-sm text-gray-300">
                 Respond instantly with intent-aware automations and next-best actions.
               </p>
             </div>
           </div>
         </div>
-      </main>
+      </div>
     </div>
   );
 }
@@ -268,9 +270,9 @@ interface MetricCardProps {
 
 function MetricCard({ label, value }: MetricCardProps) {
   return (
-    <div className="p-3 rounded-lg border border-gray-200">
-      <p className="text-xs uppercase tracking-wide text-gray-500">{label}</p>
-      <p className="text-2xl font-semibold text-gray-900">{value}</p>
+    <div className="p-3 rounded-lg border border-gray-700 bg-gray-750">
+      <p className="text-xs uppercase tracking-wide text-gray-400">{label}</p>
+      <p className="text-2xl font-semibold text-white">{value}</p>
     </div>
   );
 }
@@ -285,11 +287,11 @@ function IntentBar({ label, count, max }: IntentBarProps) {
   const widthPercent = Math.min(100, (count / max) * 100);
   return (
     <div>
-      <div className="flex justify-between text-sm text-gray-700 mb-1">
+      <div className="flex justify-between text-sm text-gray-300 mb-1">
         <span>{label}</span>
         <span>{count}</span>
       </div>
-      <div className="w-full h-2 bg-gray-100 rounded-full">
+      <div className="w-full h-2 bg-gray-700 rounded-full">
         <div className="h-2 bg-indigo-500 rounded-full" style={{ width: `${widthPercent}%` }} />
       </div>
     </div>

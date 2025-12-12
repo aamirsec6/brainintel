@@ -3,8 +3,14 @@
  * Main router that delegates to specific route handlers
  */
 import { Router, type IRouter } from 'express';
+import { getDb } from '@retail-brain/db';
+import { randomUUID } from 'crypto';
+import trackerRoutes from './tracker';
 
 const router: IRouter = Router();
+
+// Tracker script route (must be before auth middleware)
+router.use('/', trackerRoutes);
 
 // Health check
 router.get('/health', (req, res) => {
@@ -45,27 +51,7 @@ router.post('/events', async (req, res) => {
   }
 });
 
-// Customer profile - proxy to Profile Service
-router.get('/customer/:id', async (req, res) => {
-  try {
-    const profileServiceUrl =
-      process.env.PROFILE_SERVICE_URL || 'http://localhost:3003';
-
-    const response = await fetch(`${profileServiceUrl}/profiles/${req.params.id}`);
-    const data = await response.json();
-
-    res.status(response.status).json(data);
-  } catch (error) {
-    res.status(503).json({
-      error: {
-        message: 'Profile Service unavailable',
-        code: 'SERVICE_UNAVAILABLE',
-      },
-    });
-  }
-});
-
-// Customer search - proxy to Profile Service
+// Customer search - proxy to Profile Service (place before :id route to avoid capture)
 router.get('/customer/search', async (req, res) => {
   try {
     const profileServiceUrl =
@@ -86,6 +72,26 @@ router.get('/customer/search', async (req, res) => {
   }
 });
 
+// Customer profile - proxy to Profile Service
+router.get('/customer/:id', async (req, res) => {
+  try {
+    const profileServiceUrl =
+      process.env.PROFILE_SERVICE_URL || 'http://localhost:3003';
+
+    const response = await fetch(`${profileServiceUrl}/profiles/${req.params.id}`);
+    const data = await response.json();
+
+    res.status(response.status).json(data);
+  } catch (error) {
+    res.status(503).json({
+      error: {
+        message: 'Profile Service unavailable',
+        code: 'SERVICE_UNAVAILABLE',
+      },
+    });
+  }
+});
+
 // Analytics - proxy to Profile Service
 router.get('/analytics', async (req, res) => {
   try {
@@ -93,6 +99,68 @@ router.get('/analytics', async (req, res) => {
       process.env.PROFILE_SERVICE_URL || 'http://localhost:3003';
     
     const response = await fetch(`${profileServiceUrl}/profiles/analytics`);
+    const data = await response.json();
+
+    res.status(response.status).json(data);
+  } catch (error) {
+    res.status(503).json({
+      error: {
+        message: 'Profile Service unavailable',
+        code: 'SERVICE_UNAVAILABLE',
+      },
+    });
+  }
+});
+
+// Customer stats - proxy to Profile Service
+router.get('/v1/customer/stats', async (req, res) => {
+  try {
+    const profileServiceUrl =
+      process.env.PROFILE_SERVICE_URL || 'http://localhost:3003';
+    
+    const response = await fetch(`${profileServiceUrl}/profiles/stats`);
+    const data = await response.json();
+
+    res.status(response.status).json(data);
+  } catch (error) {
+    res.status(503).json({
+      error: {
+        message: 'Profile Service unavailable',
+        code: 'SERVICE_UNAVAILABLE',
+      },
+    });
+  }
+});
+
+// Recent activity - proxy to Profile Service
+router.get('/v1/customer/activity', async (req, res) => {
+  try {
+    const profileServiceUrl =
+      process.env.PROFILE_SERVICE_URL || 'http://localhost:3003';
+    
+    const queryString = new URLSearchParams(req.query as Record<string, string>).toString();
+    const response = await fetch(`${profileServiceUrl}/profiles/activity?${queryString}`);
+    const data = await response.json();
+
+    res.status(response.status).json(data);
+  } catch (error) {
+    res.status(503).json({
+      error: {
+        message: 'Profile Service unavailable',
+        code: 'SERVICE_UNAVAILABLE',
+      },
+    });
+  }
+});
+
+// Activity chart - proxy to Profile Service
+router.get('/v1/customer/activity/chart', async (req, res) => {
+  try {
+    const profileServiceUrl =
+      process.env.PROFILE_SERVICE_URL || 'http://localhost:3003';
+    
+    const queryString = new URLSearchParams(req.query as Record<string, string>).toString();
+    const response = await fetch(`${profileServiceUrl}/profiles/activity/chart?${queryString}`);
     const data = await response.json();
 
     res.status(response.status).json(data);
@@ -334,6 +402,31 @@ router.get('/ml-models/alerts', async (req, res) => {
     res.status(response.status).json(data);
   } catch (error) {
     res.status(503).json({ error: { message: 'ML Monitoring Service unavailable', code: 'SERVICE_UNAVAILABLE' } });
+  }
+});
+
+// AI Assistant - proxy to AI Assistant Service
+router.post('/v1/assistant/query', async (req, res) => {
+  try {
+    const aiAssistantUrl = process.env.AI_ASSISTANT_SERVICE_URL || 'http://localhost:3006';
+    
+    const response = await fetch(`${aiAssistantUrl}/assistant/query`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(req.body),
+    });
+
+    const data = await response.json();
+    res.status(response.status).json(data);
+  } catch (error) {
+    res.status(503).json({
+      error: {
+        message: 'AI Assistant Service unavailable',
+        code: 'SERVICE_UNAVAILABLE',
+      },
+    });
   }
 });
 
@@ -627,6 +720,114 @@ router.post('/onboarding/csv/import', async (req, res) => {
     res.status(response.status).json(data);
   } catch (error) {
     res.status(503).json({ error: { message: 'Onboarding Service unavailable', code: 'SERVICE_UNAVAILABLE' } });
+  }
+});
+
+// Intent webhook: receive channel payloads, call intent service, log result
+router.post('/webhooks/intent', async (req, res) => {
+  try {
+    const intentServiceUrl =
+      process.env.INTENT_SERVICE_URL || 'http://localhost:3017';
+
+    const body = req.body || {};
+    // Normalize text (support Twilio fields)
+    const text =
+      body.text ||
+      body.message ||
+      body.content ||
+      body.Body || // Twilio SMS/WhatsApp
+      body.subject || // Email subjects as text fallback
+      (body.payload && body.payload.text);
+
+    if (!text || typeof text !== 'string' || !text.trim()) {
+      return res.status(400).json({
+        error: { message: 'Text is required', code: 'VALIDATION_ERROR' },
+      });
+    }
+
+    const channel =
+      body.channel ||
+      body.type ||
+      body.provider ||
+      (body.source && body.source.channel) ||
+      'unknown';
+
+    const sender =
+      body.sender ||
+      body.from ||
+      body.phone ||
+      body.From || // Twilio SMS/WhatsApp
+      body.email || // Email sender if provided
+      (body.contact && body.contact.phone) ||
+      (body.payload && body.payload.from) ||
+      null;
+
+    const intentResponse = await fetch(`${intentServiceUrl}/v1/intent/detect`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text }),
+    });
+
+    const intentResult = (await intentResponse.json()) as { intent?: string; confidence?: number };
+
+    // Best-effort log
+    try {
+      const db = getDb();
+      await db.query(
+        `
+          INSERT INTO intent_message_log
+            (id, channel, sender, text, intent, confidence, raw_payload, created_at)
+          VALUES ($1, $2, $3, $4, $5, $6, $7, NOW())
+        `,
+        [
+          randomUUID(),
+          channel,
+          sender,
+          text,
+          intentResult?.intent || null,
+          intentResult?.confidence ?? null,
+          body,
+        ]
+      );
+    } catch (logErr) {
+      console.error('Failed to log intent message', logErr);
+    }
+
+    return res.status(intentResponse.status).json(intentResult);
+  } catch (error) {
+    return res.status(500).json({
+      error: { message: 'Intent webhook failed', code: 'INTERNAL_ERROR' },
+    });
+  }
+});
+
+// Recent intent logs
+router.get('/intent/logs', async (req, res) => {
+  try {
+    const limit = Math.min(parseInt(req.query.limit as string) || 50, 200);
+    const db = getDb();
+    const result = await db.query(
+      `
+        SELECT
+          id,
+          channel,
+          sender,
+          text,
+          intent,
+          confidence,
+          raw_payload,
+          created_at
+        FROM intent_message_log
+        ORDER BY created_at DESC
+        LIMIT $1
+      `,
+      [limit]
+    );
+    res.json({ results: result.rows, count: result.rows.length });
+  } catch (error) {
+    res.status(500).json({
+      error: { message: 'Failed to fetch intent logs', code: 'INTERNAL_ERROR' },
+    });
   }
 });
 

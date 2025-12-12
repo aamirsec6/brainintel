@@ -37,6 +37,29 @@ export async function retrieveContext(
     // For MVP, retrieve all context types
     const lowerQuery = query.toLowerCase();
 
+    // Check if query is asking for a specific customer by name
+    // Try multiple patterns to extract name
+    const patterns = [
+      /(?:send|show|tell|give)\s+me\s+([a-z]+(?:\s+[a-z]+)?)\s+(?:details|info|information)/i,
+      /([a-z]+(?:\s+[a-z]+)?)\s+(?:details|info|information)/i,
+      /(?:details|info|information|show|tell|about|for|send)\s+(?:me\s+)?([a-z]+(?:\s+[a-z]+)?)/i,
+      /(?:about|for)\s+([a-z]+(?:\s+[a-z]+)?)/i,
+    ];
+    
+    let searchName = null;
+    for (const pattern of patterns) {
+      const match = query.match(pattern);
+      if (match && match[1]) {
+        const candidate = match[1].trim();
+        // Skip common words
+        if (!['me', 'the', 'all', 'top', 'high', 'value', 'send', 'show', 'tell', 'give'].includes(candidate.toLowerCase())) {
+          searchName = candidate;
+          logger.debug('Extracted search name', { searchName, pattern: pattern.toString(), originalQuery: query });
+          break;
+        }
+      }
+    }
+
     // If asking about count/total/how many, get aggregated stats
     if (lowerQuery.includes('how many') || lowerQuery.includes('total') || lowerQuery.includes('count')) {
       const statsQuery = `
@@ -59,31 +82,83 @@ export async function retrieveContext(
       });
     }
 
-    // Get top customers
-    const profileQuery = `
-      SELECT 
-        id,
-        primary_phone,
-        primary_email,
-        full_name,
-        city,
-        total_orders,
-        total_spent,
-        ltv
-      FROM customer_profile
-      WHERE is_merged = false
-      ORDER BY ltv DESC
-      LIMIT $1
-    `;
+    // If searching for a specific customer by name
+    let profileQuery: string;
+    let profileParams: any[];
+    
+    if (searchName) {
+      // Search by name
+      logger.debug('Searching for customer by name', { searchName, limit });
+      profileQuery = `
+        SELECT 
+          id,
+          primary_phone,
+          primary_email,
+          full_name,
+          city,
+          total_orders,
+          total_spent,
+          ltv,
+          created_at,
+          last_seen_at
+        FROM customer_profile
+        WHERE is_merged = false
+          AND (
+            LOWER(full_name) LIKE $1
+            OR LOWER(primary_email) LIKE $1
+            OR LOWER(primary_phone) LIKE $1
+          )
+        ORDER BY 
+          CASE 
+            WHEN LOWER(full_name) LIKE $2 THEN 1
+            WHEN LOWER(primary_email) LIKE $2 THEN 2
+            ELSE 3
+          END,
+          ltv DESC
+        LIMIT $3
+      `;
+      const searchPattern = `%${searchName.toLowerCase()}%`;
+      const exactPattern = `${searchName.toLowerCase()}%`;
+      profileParams = [searchPattern, exactPattern, limit];
+      logger.debug('Executing profile search query', { searchPattern, exactPattern });
+    } else {
+      // Get top customers (default)
+      profileQuery = `
+        SELECT 
+          id,
+          primary_phone,
+          primary_email,
+          full_name,
+          city,
+          total_orders,
+          total_spent,
+          ltv
+        FROM customer_profile
+        WHERE is_merged = false
+        ORDER BY ltv DESC
+        LIMIT $1
+      `;
+      profileParams = [limit];
+    }
 
-    const profileResult = await db.query(profileQuery, [limit]);
+    const profileResult = await db.query(profileQuery, profileParams);
 
     profileResult.rows.forEach((row) => {
+      const customerInfo = [
+        `Name: ${row.full_name || 'N/A'}`,
+        `Email: ${row.primary_email || 'N/A'}`,
+        `Phone: ${row.primary_phone || 'N/A'}`,
+        `City: ${row.city || 'N/A'}`,
+        `Orders: ${row.total_orders || 0}`,
+        `Total Spent: ₹${row.total_spent || 0}`,
+        `LTV: ₹${row.ltv || 0}`,
+      ].join(', ');
+      
       context.push({
         type: 'profile',
         id: row.id,
-        content: `Customer: ${row.full_name || row.primary_email || row.primary_phone}. Orders: ${row.total_orders}, Total Spent: ${row.total_spent}, LTV: ${row.ltv}`,
-        similarity: 0.8, // Mock similarity for MVP
+        content: `Customer Profile: ${customerInfo}`,
+        similarity: searchName ? 0.95 : 0.8, // Higher similarity for name matches
         metadata: row,
       });
     });

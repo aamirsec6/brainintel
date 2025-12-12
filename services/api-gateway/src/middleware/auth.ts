@@ -16,6 +16,10 @@ const PUBLIC_ROUTES = [
   '/v1/nudges/stats',
   '/v1/nudges/evaluate',
   '/v1/nudges/evaluate/bulk',
+  '/customer/search',
+  '/v1/customer/search',
+  '/v1/customer/stats',
+  '/v1/customer/activity',
   '/v1/intent/detect',
   '/v1/intent/whatsapp',
   '/v1/intent/email',
@@ -23,6 +27,11 @@ const PUBLIC_ROUTES = [
   '/v1/intent/stats',
   '/v1/ml-models/metrics',
   '/v1/ml-models/alerts',
+  '/v1/assistant/query',
+  '/webhooks/intent',
+  '/intent/logs',
+  '/tracker.js', // Tracker script
+  '/events', // Events endpoint for tracker
 ];
 const WEBHOOK_ROUTES = ['/webhooks/shopify', '/webhooks/woocommerce', '/webhooks/generic'];
 

@@ -28,12 +28,15 @@ RUN pnpm --filter "@retail-brain/*" build
 # Build API Gateway
 RUN pnpm --filter "@retail-brain/api-gateway" build
 
-# Set working directory to the service folder for runtime
-WORKDIR /app/services/api-gateway
-
 # Expose port
 EXPOSE 3000
 
-# Start service
+# Set working directory to the service folder for runtime
+WORKDIR /app/services/api-gateway
+
+# Verify build output exists
+RUN ls -la dist/ 2>&1 || echo "Checking dist directory..."
+
+# Start service - use relative path from WORKDIR
 CMD ["node", "dist/index.js"]
 

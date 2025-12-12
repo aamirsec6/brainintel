@@ -1,0 +1,8 @@
+[build]
+builder = "DOCKERFILE"
+dockerfilePath = "services/onboarding-service/Dockerfile"
+
+[deploy]
+startCommand = "node services/onboarding-service/dist/index.js"
+restartPolicyType = "ON_FAILURE"
+

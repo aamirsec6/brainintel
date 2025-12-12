@@ -231,11 +231,11 @@ export async function searchProfiles(params: {
     if (conditions.length > 0) {
       // Search by identifiers
       query = `
-        SELECT DISTINCT
+        SELECT
           cp.*,
-          array_agg(DISTINCT row_to_json(pi.*)) as identifiers
+          array_agg(row_to_json(pi.*)) FILTER (WHERE pi.id IS NOT NULL) as identifiers
         FROM customer_profile cp
-        INNER JOIN profile_identifier pi ON pi.profile_id = cp.id
+        LEFT JOIN profile_identifier pi ON pi.profile_id = cp.id
         WHERE (${conditions.join(' OR ')})
           AND cp.is_merged = false
         GROUP BY cp.id

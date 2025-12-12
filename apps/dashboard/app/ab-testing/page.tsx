@@ -57,7 +57,8 @@ export default function ABTestingPage() {
 
   async function fetchExperiments() {
     try {
-      const response = await fetch('http://localhost:3000/v1/ab-testing/experiments');
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
+      const response = await fetch(`${apiUrl}/v1/ab-testing/experiments`);
       if (response.ok) {
         const data = await response.json();
         setExperiments(data.experiments || []);
@@ -71,7 +72,8 @@ export default function ABTestingPage() {
 
   async function createExperiment() {
     try {
-      const response = await fetch('http://localhost:3000/v1/ab-testing/experiments', {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
+      const response = await fetch(`${apiUrl}/v1/ab-testing/experiments`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(newExperiment),
@@ -88,58 +90,50 @@ export default function ABTestingPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="p-6 bg-gray-900 min-h-full flex items-center justify-center">
         <div className="text-center">
-          <div className="text-6xl mb-4">🧪</div>
-          <p className="text-gray-600">Loading experiments...</p>
+          <p className="text-gray-400">Loading experiments...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <header className="bg-white shadow-sm border-b">
-        <div className="max-w-7xl mx-auto px-6 py-4">
-          <Link href="/" className="text-blue-600 hover:text-blue-800 text-sm">
-            ← Back to Dashboard
-          </Link>
-          <div className="flex items-center justify-between mt-2">
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900">🧪 A/B Testing</h1>
-              <p className="text-sm text-gray-600">Run experiments and measure impact</p>
-            </div>
-            <button
-              onClick={() => setShowCreateForm(!showCreateForm)}
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-            >
-              + New Experiment
-            </button>
-          </div>
+    <div className="p-6 bg-gray-900 min-h-full">
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h1 className="text-2xl font-semibold text-white mb-2">A/B Testing</h1>
+          <p className="text-sm text-gray-400">Run experiments and measure impact</p>
         </div>
-      </header>
+        <button
+          onClick={() => setShowCreateForm(!showCreateForm)}
+          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+        >
+          + New Experiment
+        </button>
+      </div>
 
-      <main className="max-w-7xl mx-auto px-6 py-8">
+      <div>
         {showCreateForm && (
-          <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
-            <h2 className="text-lg font-semibold mb-4">Create New Experiment</h2>
+          <div className="bg-gray-800 rounded-lg p-6 mb-6">
+            <h2 className="text-lg font-semibold mb-4 text-white">Create New Experiment</h2>
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Experiment Name</label>
+                <label className="block text-sm font-medium text-gray-300 mb-1">Experiment Name</label>
                 <input
                   type="text"
                   value={newExperiment.name}
                   onChange={(e) => setNewExperiment({ ...newExperiment, name: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+                  className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400"
                   placeholder="e.g., Email Subject Line Test"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                <label className="block text-sm font-medium text-gray-300 mb-1">Description</label>
                 <textarea
                   value={newExperiment.description}
                   onChange={(e) => setNewExperiment({ ...newExperiment, description: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+                  className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400"
                   rows={3}
                   placeholder="What are you testing?"
                 />
@@ -153,7 +147,7 @@ export default function ABTestingPage() {
                 </button>
                 <button
                   onClick={() => setShowCreateForm(false)}
-                  className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300"
+                  className="px-4 py-2 bg-gray-700 text-gray-300 rounded-lg hover:bg-gray-600"
                 >
                   Cancel
                 </button>
@@ -163,10 +157,10 @@ export default function ABTestingPage() {
         )}
 
         {experiments.length === 0 ? (
-          <div className="bg-white rounded-lg shadow-sm p-12 text-center">
-            <div className="text-6xl mb-4">🧪</div>
-            <h3 className="text-xl font-semibold mb-2">No experiments yet</h3>
-            <p className="text-gray-600 mb-4">Create your first A/B test to start optimizing</p>
+          <div className="bg-gray-800 rounded-lg p-12 text-center">
+            <div className="text-4xl mb-4">🧪</div>
+            <h3 className="text-xl font-semibold mb-2 text-white">No experiments yet</h3>
+            <p className="text-gray-400 mb-4">Create your first A/B test to start optimizing</p>
             <button
               onClick={() => setShowCreateForm(true)}
               className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
@@ -181,7 +175,7 @@ export default function ABTestingPage() {
             ))}
           </div>
         )}
-      </main>
+      </div>
     </div>
   );
 }
@@ -199,7 +193,8 @@ function ExperimentCard({ experiment }: { experiment: Experiment }) {
   async function fetchResults() {
     setLoadingResults(true);
     try {
-      const response = await fetch(`http://localhost:3000/v1/ab-testing/experiments/${experiment.id}/results`);
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
+      const response = await fetch(`${apiUrl}/v1/ab-testing/experiments/${experiment.id}/results`);
       if (response.ok) {
         const data = await response.json();
         setResults(data);
@@ -215,7 +210,8 @@ function ExperimentCard({ experiment }: { experiment: Experiment }) {
     if (!profileId) return;
     setAssigning(true);
     try {
-      const response = await fetch(`http://localhost:3000/v1/ab-testing/experiments/${experiment.id}/assign`, {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
+      const response = await fetch(`${apiUrl}/v1/ab-testing/experiments/${experiment.id}/assign`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ profile_id: profileId }),
@@ -235,7 +231,8 @@ function ExperimentCard({ experiment }: { experiment: Experiment }) {
     if (!profileId) return;
     setRecording(true);
     try {
-      const response = await fetch(`http://localhost:3000/v1/ab-testing/experiments/${experiment.id}/conversion`, {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
+      const response = await fetch(`${apiUrl}/v1/ab-testing/experiments/${experiment.id}/conversion`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -255,19 +252,19 @@ function ExperimentCard({ experiment }: { experiment: Experiment }) {
   }
 
   const statusColors = {
-    draft: 'bg-gray-100 text-gray-800',
-    running: 'bg-green-100 text-green-800',
-    paused: 'bg-yellow-100 text-yellow-800',
-    completed: 'bg-blue-100 text-blue-800',
+    draft: 'bg-gray-700 text-gray-300',
+    running: 'bg-green-500/20 text-green-400',
+    paused: 'bg-yellow-500/20 text-yellow-400',
+    completed: 'bg-blue-500/20 text-blue-400',
   };
 
   return (
-    <div className="bg-white rounded-lg shadow-sm p-6">
+    <div className="bg-gray-800 rounded-lg p-6">
       <div className="flex items-start justify-between mb-4">
         <div>
-          <h3 className="text-lg font-semibold text-gray-900">{experiment.name}</h3>
+          <h3 className="text-lg font-semibold text-white">{experiment.name}</h3>
           {experiment.description && (
-            <p className="text-sm text-gray-600 mt-1">{experiment.description}</p>
+            <p className="text-sm text-gray-400 mt-1">{experiment.description}</p>
           )}
         </div>
         <span className={`px-3 py-1 text-xs font-medium rounded-full ${statusColors[experiment.status]}`}>
@@ -277,12 +274,12 @@ function ExperimentCard({ experiment }: { experiment: Experiment }) {
 
       <div className="grid grid-cols-2 gap-4 mb-4">
         <div>
-          <p className="text-sm text-gray-600">Variants</p>
-          <p className="font-medium">{experiment.variants.join(', ')}</p>
+          <p className="text-sm text-gray-400">Variants</p>
+          <p className="font-medium text-white">{experiment.variants.join(', ')}</p>
         </div>
         <div>
-          <p className="text-sm text-gray-600">Traffic Split</p>
-          <p className="font-medium">
+          <p className="text-sm text-gray-400">Traffic Split</p>
+          <p className="font-medium text-white">
             {Object.entries(experiment.traffic_split)
               .map(([v, p]) => `${v}: ${p}%`)
               .join(', ')}
@@ -291,33 +288,33 @@ function ExperimentCard({ experiment }: { experiment: Experiment }) {
       </div>
 
       {/* Variant assignment and conversion logging */}
-      <div className="mt-4 pt-4 border-t border-gray-200">
-        <h4 className="text-sm font-semibold mb-3">Test Harness</h4>
+      <div className="mt-4 pt-4 border-t border-gray-700">
+        <h4 className="text-sm font-semibold mb-3 text-white">Test Harness</h4>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3 items-end">
           <div>
-            <label className="text-sm text-gray-600">Profile ID</label>
+            <label className="text-sm text-gray-400">Profile ID</label>
             <input
               value={profileId}
               onChange={(e) => setProfileId(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+              className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400"
               placeholder="customer profile id"
             />
           </div>
           <div>
-            <label className="text-sm text-gray-600">Conversion Type</label>
+            <label className="text-sm text-gray-400">Conversion Type</label>
             <input
               value={conversionType}
               onChange={(e) => setConversionType(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+              className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400"
               placeholder="purchase / click / signup"
             />
           </div>
           <div>
-            <label className="text-sm text-gray-600">Conversion Value (₹ optional)</label>
+            <label className="text-sm text-gray-400">Conversion Value (₹ optional)</label>
             <input
               value={conversionValue}
               onChange={(e) => setConversionValue(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+              className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400"
               placeholder="e.g., 1200"
             />
           </div>
@@ -326,7 +323,7 @@ function ExperimentCard({ experiment }: { experiment: Experiment }) {
           <button
             onClick={assignVariant}
             disabled={assigning || !profileId}
-            className="px-4 py-2 bg-gray-100 text-gray-800 rounded-lg hover:bg-gray-200 disabled:opacity-50"
+            className="px-4 py-2 bg-gray-700 text-gray-300 rounded-lg hover:bg-gray-600 disabled:opacity-50"
           >
             {assigning ? 'Assigning...' : 'Assign Variant'}
           </button>
@@ -346,53 +343,53 @@ function ExperimentCard({ experiment }: { experiment: Experiment }) {
           </button>
         </div>
         {assignedVariant && (
-          <p className="text-sm text-gray-600 mt-2">Assigned variant: <span className="font-medium">{assignedVariant}</span></p>
+          <p className="text-sm text-gray-400 mt-2">Assigned variant: <span className="font-medium text-white">{assignedVariant}</span></p>
         )}
       </div>
 
       {results && (
-        <div className="mt-4 pt-4 border-t border-gray-200">
-          <h4 className="text-sm font-semibold mb-2">Results</h4>
+        <div className="mt-4 pt-4 border-t border-gray-700">
+          <h4 className="text-sm font-semibold mb-2 text-white">Results</h4>
           <div className="grid grid-cols-3 gap-4 mb-3">
             <div>
-              <p className="text-sm text-gray-600">Total Assigned</p>
-              <p className="font-medium">{results.results.summary.total_assigned}</p>
+              <p className="text-sm text-gray-400">Total Assigned</p>
+              <p className="font-medium text-white">{results.results.summary.total_assigned}</p>
             </div>
             <div>
-              <p className="text-sm text-gray-600">Total Converted</p>
-              <p className="font-medium">{results.results.summary.total_converted}</p>
+              <p className="text-sm text-gray-400">Total Converted</p>
+              <p className="font-medium text-white">{results.results.summary.total_converted}</p>
             </div>
             <div>
-              <p className="text-sm text-gray-600">Overall Conversion Rate</p>
-              <p className="font-medium">{results.results.summary.overall_conversion_rate.toFixed(2)}%</p>
+              <p className="text-sm text-gray-400">Overall Conversion Rate</p>
+              <p className="font-medium text-white">{results.results.summary.overall_conversion_rate.toFixed(2)}%</p>
             </div>
           </div>
           <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
+            <table className="min-w-full divide-y divide-gray-700">
+              <thead className="bg-gray-750">
                 <tr>
-                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Variant</th>
-                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Assigned</th>
-                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Converted</th>
-                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Conv Rate</th>
-                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Uplift vs Control</th>
-                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Avg Value</th>
+                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-300 uppercase">Variant</th>
+                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-300 uppercase">Assigned</th>
+                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-300 uppercase">Converted</th>
+                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-300 uppercase">Conv Rate</th>
+                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-300 uppercase">Uplift vs Control</th>
+                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-300 uppercase">Avg Value</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-200">
+              <tbody className="divide-y divide-gray-700">
                 {results.results.results.map((variant) => {
                   const isWinner = variant.uplift === Math.max(...results.results.results.map((v) => v.uplift));
-                  const upliftColor = variant.uplift >= 0 ? 'text-green-600' : 'text-red-600';
+                  const upliftColor = variant.uplift >= 0 ? 'text-green-400' : 'text-red-400';
                   return (
-                    <tr key={variant.variant} className={isWinner ? 'bg-green-50' : ''}>
-                      <td className="px-4 py-2 text-sm font-medium text-gray-900">{variant.variant}</td>
-                      <td className="px-4 py-2 text-sm text-gray-700">{variant.assigned_count}</td>
-                      <td className="px-4 py-2 text-sm text-gray-700">{variant.converted_count}</td>
-                      <td className="px-4 py-2 text-sm text-gray-700">{variant.conversion_rate.toFixed(2)}%</td>
+                    <tr key={variant.variant} className={isWinner ? 'bg-green-500/10' : ''}>
+                      <td className="px-4 py-2 text-sm font-medium text-white">{variant.variant}</td>
+                      <td className="px-4 py-2 text-sm text-gray-300">{variant.assigned_count}</td>
+                      <td className="px-4 py-2 text-sm text-gray-300">{variant.converted_count}</td>
+                      <td className="px-4 py-2 text-sm text-gray-300">{variant.conversion_rate.toFixed(2)}%</td>
                       <td className={`px-4 py-2 text-sm font-medium ${upliftColor}`}>
                         {variant.variant === results.results.results[0].variant ? '—' : `${variant.uplift.toFixed(2)}%`}
                       </td>
-                      <td className="px-4 py-2 text-sm text-gray-700">₹{variant.avg_value.toFixed(2)}</td>
+                      <td className="px-4 py-2 text-sm text-gray-300">₹{variant.avg_value.toFixed(2)}</td>
                     </tr>
                   );
                 })}

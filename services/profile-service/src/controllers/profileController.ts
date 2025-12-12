@@ -165,6 +165,201 @@ export async function getStats(req: Request, res: Response) {
 }
 
 /**
+ * Get activity chart data (events and customers by day)
+ */
+export async function getActivityChart(req: Request, res: Response) {
+  try {
+    const db = getDb();
+    const days = parseInt(req.query.days as string) || 7;
+    
+    // Get events by day
+    const eventsQuery = `
+      SELECT 
+        DATE(received_at) as date,
+        COUNT(*) as count
+      FROM customer_raw_event
+      WHERE received_at >= NOW() - INTERVAL '${days} days'
+      GROUP BY DATE(received_at)
+      ORDER BY DATE(received_at) ASC
+    `;
+    
+    const eventsResult = await db.query(eventsQuery);
+    
+    // Get unique customers by day - count distinct profile_ids from events table
+    // If events table doesn't have data, count distinct identifiers from raw events
+    let customersResult;
+    try {
+      const customersQuery = `
+        SELECT 
+          DATE(event_ts) as date,
+          COUNT(DISTINCT profile_id) as count
+        FROM events
+        WHERE event_ts >= NOW() - INTERVAL '${days} days'
+          AND profile_id IS NOT NULL
+        GROUP BY DATE(event_ts)
+        ORDER BY DATE(event_ts) ASC
+      `;
+      customersResult = await db.query(customersQuery);
+      
+      // If no results, use fallback
+      if (customersResult.rows.length === 0) {
+        throw new Error('No events data');
+      }
+    } catch (error) {
+      // Fallback: count distinct identifiers from raw events
+      const fallbackQuery = `
+        SELECT 
+          DATE(received_at) as date,
+          COUNT(DISTINCT 
+            COALESCE(
+              identifiers->>'phone',
+              identifiers->>'email',
+              id::text
+            )
+          ) as count
+        FROM customer_raw_event
+        WHERE received_at >= NOW() - INTERVAL '${days} days'
+        GROUP BY DATE(received_at)
+        ORDER BY DATE(received_at) ASC
+      `;
+      customersResult = await db.query(fallbackQuery);
+    }
+    
+    // Create a map of dates to counts
+    const eventsMap = new Map<string, number>();
+    eventsResult.rows.forEach((row: any) => {
+      eventsMap.set(row.date.toISOString().split('T')[0], parseInt(row.count));
+    });
+    
+    const customersMap = new Map<string, number>();
+    customersResult.rows.forEach((row: any) => {
+      customersMap.set(row.date.toISOString().split('T')[0], parseInt(row.count));
+    });
+    
+    // Generate array for last N days
+    const data: Array<{ date: string; events: number; customers: number }> = [];
+    for (let i = days - 1; i >= 0; i--) {
+      const date = new Date();
+      date.setDate(date.getDate() - i);
+      const dateStr = date.toISOString().split('T')[0];
+      const dayName = date.toLocaleDateString('en-US', { weekday: 'short' });
+      
+      data.push({
+        date: dayName,
+        events: eventsMap.get(dateStr) || 0,
+        customers: customersMap.get(dateStr) || 0,
+      });
+    }
+    
+    res.json({ data });
+  } catch (error) {
+    logger.error('Failed to get activity chart data', error instanceof Error ? error : new Error(String(error)));
+    res.status(500).json({
+      error: {
+        message: 'Failed to retrieve activity chart data',
+        code: 'INTERNAL_ERROR',
+      },
+    });
+  }
+}
+
+/**
+ * Get recent activity feed
+ */
+export async function getRecentActivity(req: Request, res: Response) {
+  try {
+    const db = getDb();
+    const limit = parseInt(req.query.limit as string) || 10;
+    
+    // Get recent activities from multiple sources
+    const query = `
+      (
+        -- New profiles
+        SELECT 
+          'profile' as type,
+          'New customer profile created' as title,
+          COALESCE(cp.full_name, 'A customer') || ' was added to the database' as description,
+          cp.created_at as activity_time
+        FROM customer_profile cp
+        WHERE cp.is_merged = false
+        ORDER BY cp.created_at DESC
+        LIMIT ${limit}
+      )
+      UNION ALL
+      (
+        -- Merges
+        SELECT 
+          'merge' as type,
+          'Identity merge completed' as title,
+          '2 profiles were merged into one unified identity' as description,
+          merged_at as activity_time
+        FROM identity_merge_log
+        ORDER BY merged_at DESC
+        LIMIT ${limit}
+      )
+      UNION ALL
+      (
+        -- Purchase events
+        SELECT 
+          'purchase' as type,
+          'Purchase event captured' as title,
+          COALESCE('₹' || revenue::text, '$0') || ' transaction from customer' as description,
+          event_ts as activity_time
+        FROM events
+        WHERE event_type = 'order_placed' AND revenue > 0
+        ORDER BY event_ts DESC
+        LIMIT ${limit}
+      )
+      UNION ALL
+      (
+        -- Nudges
+        SELECT 
+          'campaign' as type,
+          'Nudge executed' as title,
+          nudge_type || ' nudge sent via ' || channel as description,
+          executed_at as activity_time
+        FROM nudge_log
+        ORDER BY executed_at DESC
+        LIMIT ${limit}
+      )
+      UNION ALL
+      (
+        -- Intent detections
+        SELECT 
+          'intent' as type,
+          'Intent detected' as title,
+          COALESCE(intent, 'Unknown') || ' intent from ' || channel as description,
+          created_at as activity_time
+        FROM intent_message_log
+        ORDER BY created_at DESC
+        LIMIT ${limit}
+      )
+      ORDER BY activity_time DESC
+      LIMIT ${limit}
+    `;
+    
+    const result = await db.query(query);
+    
+    const activities = result.rows.map((row: any) => ({
+      type: row.type,
+      title: row.title,
+      description: row.description,
+      time: row.activity_time,
+    }));
+    
+    res.json({ activities });
+  } catch (error) {
+    logger.error('Failed to get recent activity', error instanceof Error ? error : new Error(String(error)));
+    res.status(500).json({
+      error: {
+        message: 'Failed to retrieve recent activity',
+        code: 'INTERNAL_ERROR',
+      },
+    });
+  }
+}
+
+/**
  * Get comprehensive analytics with time-series data
  */
 export async function getAnalytics(req: Request, res: Response) {
@@ -207,6 +402,8 @@ export async function getAnalytics(req: Request, res: Response) {
     `;
     
     const revenueByDayResult = await db.query(revenueByDayQuery);
+    // Reverse to chronological order for the chart (oldest to newest)
+    const revenueByDayChrono = revenueByDayResult.rows.slice().reverse();
     
     // Get top cities
     const topCitiesQuery = `

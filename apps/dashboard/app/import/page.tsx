@@ -123,30 +123,18 @@ export default function ImportPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <header className="bg-white shadow-sm border-b">
-        <div className="max-w-7xl mx-auto px-6 py-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900">📥 Import Customers</h1>
-              <p className="text-sm text-gray-600">Upload CSV file to import customer data</p>
-            </div>
-            <button
-              onClick={() => router.back()}
-              className="px-4 py-2 text-gray-600 hover:text-gray-900"
-            >
-              ← Back
-            </button>
-          </div>
-        </div>
-      </header>
+    <div className="p-6 bg-gray-900 min-h-full">
+      <div className="mb-6">
+        <h1 className="text-2xl font-semibold text-white mb-2">Import Customers</h1>
+        <p className="text-sm text-gray-400">Upload CSV file to import customer data</p>
+      </div>
 
-      <main className="max-w-4xl mx-auto px-6 py-8">
+      <div className="max-w-4xl">
         {/* Step 1: File Upload */}
-        <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
-          <h2 className="text-xl font-semibold mb-4">Step 1: Upload CSV File</h2>
+        <div className="bg-gray-800 rounded-lg p-6 mb-6">
+          <h2 className="text-xl font-semibold mb-4 text-white">Step 1: Upload CSV File</h2>
           
-          <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
+          <div className="border-2 border-dashed border-gray-600 rounded-lg p-8 text-center">
             <input
               type="file"
               accept=".csv"
@@ -159,10 +147,10 @@ export default function ImportPage() {
               className="cursor-pointer flex flex-col items-center"
             >
               <div className="text-4xl mb-4">📄</div>
-              <p className="text-gray-600 mb-2">
+              <p className="text-gray-300 mb-2">
                 {file ? file.name : 'Click to select CSV file'}
               </p>
-              <p className="text-sm text-gray-500">
+              <p className="text-sm text-gray-400">
                 CSV files only (phone, email, name, etc.)
               </p>
             </label>
@@ -181,31 +169,31 @@ export default function ImportPage() {
 
         {/* Step 2: Preview & Column Mapping */}
         {preview && (
-          <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
-            <h2 className="text-xl font-semibold mb-4">
+          <div className="bg-gray-800 rounded-lg p-6 mb-6">
+            <h2 className="text-xl font-semibold mb-4 text-white">
               Step 2: Review & Map Columns
             </h2>
             
             <div className="mb-4">
-              <p className="text-sm text-gray-600 mb-2">
-                File: <strong>{preview.filename}</strong> ({preview.rows_count} rows)
+              <p className="text-sm text-gray-300 mb-2">
+                File: <strong className="text-white">{preview.filename}</strong> ({preview.rows_count} rows)
               </p>
-              <p className="text-sm text-gray-600">
+              <p className="text-sm text-gray-400">
                 Detected columns: {preview.columns.join(', ')}
               </p>
             </div>
 
             {/* Column Mapping */}
             <div className="mb-6">
-              <h3 className="font-medium mb-3">Map CSV Columns to Fields:</h3>
+              <h3 className="font-medium mb-3 text-white">Map CSV Columns to Fields:</h3>
               <div className="space-y-2">
                 {preview.columns.map((col) => (
                   <div key={col} className="flex items-center gap-4">
-                    <label className="w-32 text-sm text-gray-700">{col}:</label>
+                    <label className="w-32 text-sm text-gray-300">{col}:</label>
                     <select
                       value={columnMapping[col] || ''}
                       onChange={(e) => updateMapping(col, e.target.value)}
-                      className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      className="flex-1 px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     >
                       <option value="">-- Select field --</option>
                       <option value="phone">Phone</option>
@@ -226,25 +214,25 @@ export default function ImportPage() {
               <h3 className="font-medium mb-3">Preview (first 5 rows):</h3>
               <div className="overflow-x-auto">
                 <table className="min-w-full divide-y divide-gray-200">
-                  <thead className="bg-gray-50">
+                  <thead className="bg-gray-700">
                     <tr>
                       {preview.columns.map((col) => (
                         <th
                           key={col}
-                          className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase"
+                          className="px-4 py-2 text-left text-xs font-medium text-gray-300 uppercase"
                         >
                           {col}
                         </th>
                       ))}
                     </tr>
                   </thead>
-                  <tbody className="bg-white divide-y divide-gray-200">
+                  <tbody className="bg-gray-700 divide-y divide-gray-600">
                     {preview.preview.map((row, idx) => (
                       <tr key={idx}>
                         {preview.columns.map((col) => (
                           <td
                             key={col}
-                            className="px-4 py-2 text-sm text-gray-900"
+                            className="px-4 py-2 text-sm text-white"
                           >
                             {row[col] || '-'}
                           </td>
@@ -275,38 +263,38 @@ export default function ImportPage() {
 
         {/* Step 3: Import Results */}
         {importResult && (
-          <div className="bg-white rounded-lg shadow-sm p-6">
-            <h2 className="text-xl font-semibold mb-4">Step 3: Import Results</h2>
+          <div className="bg-gray-800 rounded-lg p-6">
+            <h2 className="text-xl font-semibold mb-4 text-white">Step 3: Import Results</h2>
             
             <div className="space-y-3">
               <div className="flex justify-between">
-                <span className="text-gray-600">Profiles Created:</span>
-                <span className="font-semibold text-green-600">
+                <span className="text-gray-400">Profiles Created:</span>
+                <span className="font-semibold text-green-400">
                   {importResult.profiles_created}
                 </span>
               </div>
               <div className="flex justify-between">
-                <span className="text-gray-600">Profiles Updated:</span>
-                <span className="font-semibold text-blue-600">
+                <span className="text-gray-400">Profiles Updated:</span>
+                <span className="font-semibold text-blue-400">
                   {importResult.profiles_updated}
                 </span>
               </div>
               <div className="flex justify-between">
-                <span className="text-gray-600">Errors:</span>
-                <span className="font-semibold text-red-600">
+                <span className="text-gray-400">Errors:</span>
+                <span className="font-semibold text-red-400">
                   {importResult.errors}
                 </span>
               </div>
               <div className="flex justify-between">
-                <span className="text-gray-600">Duration:</span>
-                <span className="font-semibold">
+                <span className="text-gray-400">Duration:</span>
+                <span className="font-semibold text-white">
                   {(importResult.duration_ms / 1000).toFixed(2)}s
                 </span>
               </div>
             </div>
 
-            <div className="mt-6 p-4 bg-green-50 rounded-lg">
-              <p className="text-green-800 font-medium">
+            <div className="mt-6 p-4 bg-green-500/20 border border-green-500/30 rounded-lg">
+              <p className="text-green-400 font-medium">
                 ✅ Import completed! Redirecting to customers page...
               </p>
             </div>
@@ -315,16 +303,16 @@ export default function ImportPage() {
 
         {/* Error Display */}
         {error && (
-          <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
-            <p className="text-red-800 font-medium">❌ Error</p>
-            <p className="text-red-600 text-sm mt-1">{error}</p>
+          <div className="bg-red-500/20 border border-red-500/30 rounded-lg p-4 mb-6">
+            <p className="text-red-400 font-medium">❌ Error</p>
+            <p className="text-red-300 text-sm mt-1">{error}</p>
           </div>
         )}
 
         {/* Help Section */}
-        <div className="bg-blue-50 rounded-lg p-6 mt-6">
-          <h3 className="font-semibold text-blue-900 mb-2">📋 CSV Format Guide</h3>
-          <ul className="text-sm text-blue-800 space-y-1">
+        <div className="bg-gray-800 rounded-lg p-6 mt-6">
+          <h3 className="font-semibold text-white mb-2">CSV Format Guide</h3>
+          <ul className="text-sm text-gray-300 space-y-1">
             <li>• CSV should have headers in the first row</li>
             <li>• Required: At least one of Phone or Email</li>
             <li>• Supported columns: phone, email, name, first_name, last_name, city, state</li>
@@ -332,7 +320,7 @@ export default function ImportPage() {
             <li>• Duplicate customers will be merged automatically</li>
           </ul>
         </div>
-      </main>
+      </div>
     </div>
   );
 }

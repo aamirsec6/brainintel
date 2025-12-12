@@ -69,8 +69,36 @@ function getEnvBool(key: string, defaultValue = false): boolean {
 
 /**
  * Database configuration
+ * Supports both connection string (Supabase) and individual parameters
  */
-export const dbConfig = {
+function parseDatabaseUrl(url: string | undefined): {
+  host: string;
+  port: number;
+  database: string;
+  user: string;
+  password: string;
+} | null {
+  if (!url) return null;
+  
+  try {
+    const parsed = new URL(url);
+    return {
+      host: parsed.hostname,
+      port: parseInt(parsed.port || '5432'),
+      database: parsed.pathname.slice(1) || 'postgres',
+      user: parsed.username,
+      password: parsed.password,
+    };
+  } catch {
+    return null;
+  }
+}
+
+// Try DATABASE_URL first (Supabase format), then fall back to individual vars
+const databaseUrl = process.env.DATABASE_URL;
+const parsedUrl = parseDatabaseUrl(databaseUrl);
+
+export const dbConfig = parsedUrl || {
   host: getEnvOrDefault('POSTGRES_HOST', 'localhost'),
   port: getEnvInt('POSTGRES_PORT', 5432),
   database: getEnvOrDefault('POSTGRES_DB', 'retail_brain'),

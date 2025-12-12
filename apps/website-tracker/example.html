@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Retail Brain Tracker Example</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      max-width: 800px;
+      margin: 50px auto;
+      padding: 20px;
+      line-height: 1.6;
+    }
+    .button {
+      background: #007AFF;
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 16px;
+      margin: 10px 5px;
+    }
+    .button:hover {
+      background: #0051D5;
+    }
+    .form-group {
+      margin: 20px 0;
+    }
+    label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: 500;
+    }
+    input {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      font-size: 14px;
+    }
+    .info {
+      background: #f0f0f0;
+      padding: 15px;
+      border-radius: 8px;
+      margin: 20px 0;
+    }
+  </style>
+</head>
+<body>
+  <h1>🛍️ Retail Brain Tracker Example</h1>
+  
+  <div class="info">
+    <strong>📊 This page demonstrates the Retail Brain website tracker.</strong><br>
+    Open your browser console to see events being tracked.
+  </div>
+
+  <h2>1. Automatic Tracking</h2>
+  <p>The tracker automatically captures:</p>
+  <ul>
+    <li>✅ Page views</li>
+    <li>✅ Session tracking</li>
+    <li>✅ User identification</li>
+    <li>✅ Device information</li>
+  </ul>
+
+  <h2>2. Manual Event Tracking</h2>
+  
+  <button class="button" id="product-view-btn">
+    Track Product View
+  </button>
+  
+  <button class="button" id="add-to-cart-btn">
+    Add to Cart
+  </button>
+  
+  <button class="button" id="purchase-btn">
+    Track Purchase
+  </button>
+
+  <h2>3. User Identification</h2>
+  
+  <form id="identify-form">
+    <div class="form-group">
+      <label>Email:</label>
+      <input type="email" name="email" placeholder="customer@example.com">
+    </div>
+    <div class="form-group">
+      <label>Name:</label>
+      <input type="text" name="name" placeholder="John Doe">
+    </div>
+    <div class="form-group">
+      <label>Phone:</label>
+      <input type="tel" name="phone" placeholder="+919876543210">
+    </div>
+    <button type="submit" class="button">Identify User</button>
+  </form>
+
+  <h2>4. Custom Events</h2>
+  
+  <button class="button" id="custom-event-btn">
+    Track Custom Event
+  </button>
+
+  <!-- Include the tracker script -->
+  <script src="http://localhost:3000/tracker.js"></script>
+  
+  <script>
+    // Initialize the tracker
+    RetailBrain.init({
+      apiUrl: 'http://localhost:3000',
+      debug: true, // Enable debug logs
+      autoTrack: {
+        pageviews: true,
+        clicks: true,
+        forms: true
+      }
+    });
+
+    // Track product view
+    document.getElementById('product-view-btn').addEventListener('click', () => {
+      RetailBrain.track('product_view', {
+        product_id: '123',
+        product_name: 'iPhone 15 Pro',
+        category: 'Electronics',
+        price: 99999,
+        currency: 'INR'
+      });
+      alert('✅ Product view tracked! Check console.');
+    });
+
+    // Track add to cart
+    document.getElementById('add-to-cart-btn').addEventListener('click', () => {
+      RetailBrain.trackAddToCart({
+        product_id: '123',
+        product_name: 'iPhone 15 Pro',
+        price: 99999,
+        quantity: 1
+      });
+      alert('✅ Add to cart tracked! Check console.');
+    });
+
+    // Track purchase
+    document.getElementById('purchase-btn').addEventListener('click', () => {
+      RetailBrain.trackPurchase({
+        order_id: 'ORD-' + Date.now(),
+        revenue: 99999,
+        currency: 'INR',
+        items: [
+          {
+            product_id: '123',
+            name: 'iPhone 15 Pro',
+            price: 99999,
+            quantity: 1
+          }
+        ]
+      });
+      alert('✅ Purchase tracked! Check console.');
+    });
+
+    // Identify user
+    document.getElementById('identify-form').addEventListener('submit', (e) => {
+      e.preventDefault();
+      const formData = new FormData(e.target);
+      
+      RetailBrain.identify({
+        email: formData.get('email'),
+        name: formData.get('name'),
+        phone: formData.get('phone')
+      });
+      
+      alert('✅ User identified! Check console.');
+    });
+
+    // Track custom event
+    document.getElementById('custom-event-btn').addEventListener('click', () => {
+      RetailBrain.track('newsletter_signup', {
+        source: 'homepage',
+        campaign: 'summer_sale'
+      });
+      alert('✅ Custom event tracked! Check console.');
+    });
+  </script>
+</body>
+</html>
+
