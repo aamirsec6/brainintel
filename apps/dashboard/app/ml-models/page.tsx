@@ -56,31 +56,34 @@ export default function MLModelsPage() {
       const models = ['identity_resolution_model', 'intent-detection', 'recommendation-model', 'churn-prediction', 'ltv-prediction'];
       const metricsData = await Promise.all(
         models.map(async (model) => {
-          try {
-            const res = await fetch(`http://localhost:3000/v1/ml-models/metrics/${model}?days=7`);
-            if (res.ok) {
-              const data = await res.json();
+            try {
+              const res = await fetch(`http://localhost:3000/v1/ml-models/metrics/${model}?days=7`);
+              if (res.ok) {
+                const data = await res.json();
+                return {
+                  model_name: model,
+                  period_days: 7,
+                  total_predictions: data.total_predictions || 0,
+                  metrics: data.metrics || {},
+                };
+              } else {
+                // Return a default structure if request fails
+                return {
+                  model_name: model,
+                  period_days: 7,
+                  total_predictions: 0,
+                  metrics: {},
+                };
+              }
+            } catch (e) {
+              // Return a default structure even if fetch fails
               return {
                 model_name: model,
-                total_predictions: data.total_predictions || 0,
-                metrics: data.metrics || {},
-              };
-            } else {
-              // Return a default structure if request fails
-              return {
-                model_name: model,
+                period_days: 7,
                 total_predictions: 0,
                 metrics: {},
               };
             }
-          } catch (e) {
-            // Return a default structure even if fetch fails
-            return {
-              model_name: model,
-              total_predictions: 0,
-              metrics: {},
-            };
-          }
         })
       );
       setMetrics(metricsData);
