@@ -8,6 +8,7 @@ interface IntentResult {
   confidence: number;
   channel?: string;
   metadata?: Record<string, any>;
+  explanation?: string;
 }
 
 export default function IntentPage() {
