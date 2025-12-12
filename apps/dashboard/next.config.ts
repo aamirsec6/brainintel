@@ -3,11 +3,11 @@ import type { NextConfig } from 'next';
 const nextConfig: NextConfig = {
   reactStrictMode: true,
   eslint: {
-    // Don't fail build on ESLint errors during deployment
+    // Ignore ESLint during builds to avoid module resolution issues
     ignoreDuringBuilds: true,
   },
   typescript: {
-    // Don't fail build on TypeScript errors (we'll fix them)
+    // Don't ignore TypeScript errors - we want to catch real issues
     ignoreBuildErrors: false,
   },
   env: {
