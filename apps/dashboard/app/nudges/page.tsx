@@ -436,7 +436,7 @@ export default function NudgesPage() {
             </div>
           )}
         </div>
-      </main>
+      </div>
     </div>
   );
 }
